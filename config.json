@@ -2,14 +2,18 @@
   "profiles": {
     "default": {
       "description": "Một bộ tổng hợp các đuôi file phổ biến nhất.",
-      "extensions": [".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".html", ".css", ".py", ".cs"]
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".html", ".css", ".scss", ".py", ".cs", ".go"]
     },
     "web-basic": {
       "description": "Dành cho các dự án web tĩnh cơ bản.",
-      "extensions": [".html", ".css", ".js", ".json", ".md"]
+      "extensions": [".html", ".css", ".scss", ".js", ".json", ".md"]
     },
     "react": {
-      "description": "Dành cho dự án React/React Native, Next.js.",
+      "description": "Dành cho dự án React hoặc React Native.",
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".md"]
+    },
+    "nextjs": {
+      "description": "Dành cho dự án Next.js (bao gồm cả SCSS).",
       "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".md"]
     },
     "vue": {
@@ -18,7 +22,11 @@
     },
     "svelte": {
       "description": "Dành cho dự án Svelte/SvelteKit.",
-      "extensions": [".svelte", ".js", ".ts", ".css", ".json", ".md"]
+      "extensions": [".svelte", ".js", ".ts", ".css", ".scss", ".json", ".md"]
+    },
+    "typescript": {
+      "description": "Dành cho các dự án TypeScript thuần (ví dụ: Node.js backend).",
+      "extensions": [".ts", "tsconfig.json", ".json", ".md"]
     },
     "python": {
       "description": "Dành cho các dự án Python (Django, Flask,...).",
@@ -35,6 +43,10 @@
     "java-spring": {
         "description": "Dành cho dự án Java Spring Boot.",
         "extensions": [".java", ".xml", ".properties", "gradle", ".yml", ".json"]
+    },
+    "golang": {
+        "description": "Dành cho dự án Go (Golang).",
+        "extensions": [".go", "go.mod", "go.sum", ".json", ".yml", ".toml"]
     },
     "godot": {
       "description": "Dành cho dự án Godot Engine dùng GDScript.",
