@@ -2,6 +2,7 @@ import os
 import argparse
 import codecs
 import pathspec
+from tqdm import tqdm
 
 # --- CẤU HÌNH MẶC ĐỊNH ---
 DEFAULT_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx', '.json', '.md', '.html', '.css', '.py', '.cs']
@@ -9,61 +10,44 @@ DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pyc
 # --- KẾT THÚC CẤU HÌNH ---
 
 def get_gitignore_spec(root_dir):
-    """
-    Tìm và phân tích file .gitignore để tạo ra một đối tượng spec.
-    """
     gitignore_path = os.path.join(root_dir, '.gitignore')
-    spec = None
     if os.path.exists(gitignore_path):
         with open(gitignore_path, 'r', encoding='utf-8') as f:
-            spec = pathspec.GitIgnoreSpec.from_lines(f.read().splitlines())
-    return spec
+            return pathspec.GitIgnoreSpec.from_lines(f.read().splitlines())
+    return None
 
 def generate_tree(root_dir, exclude_dirs, gitignore_spec):
-    """
-    Tạo ra một chuỗi string biểu diễn cấu trúc cây thư mục.
-    """
     tree_lines = []
     exclude_set = set(exclude_dirs)
-
+    
     for dirpath, dirnames, filenames in os.walk(root_dir, topdown=True):
-        # Lấy đường dẫn tương đối để kiểm tra
         relative_path = os.path.relpath(dirpath, root_dir)
         
-        # Bỏ qua thư mục gốc
-        if relative_path == ".":
-            base_level = 0
-        else:
-            # Kiểm tra xem thư mục hiện tại có bị ignore không
-            if gitignore_spec and gitignore_spec.match_file(relative_path):
-                dirnames[:] = [] # Không duyệt sâu hơn vào thư mục này
-                continue
-            base_level = relative_path.count(os.sep) + 1
-
-        # Lọc các thư mục con
+        if relative_path != "." and (gitignore_spec and gitignore_spec.match_file(relative_path)):
+            dirnames[:] = []
+            continue
+            
         dirnames[:] = [d for d in dirnames if d not in exclude_set and not d.startswith('.')]
         
-        # In thư mục hiện tại (nếu không phải gốc)
-        if base_level > 0:
-            indent = '│   ' * (base_level - 1) + '├── '
+        level = relative_path.count(os.sep) + 1 if relative_path != "." else 0
+        
+        if level > 0:
+            indent = '│   ' * (level - 1) + '├── '
             tree_lines.append(f"{indent}{os.path.basename(dirpath)}/")
         
-        # Lọc và in các file con
-        sub_indent = '│   ' * base_level
+        sub_indent = '│   ' * level
         
-        # Lọc file trước khi in
         files_to_print = []
         for f in sorted(filenames):
             file_rel_path = os.path.join(relative_path, f) if relative_path != '.' else f
             if not (gitignore_spec and gitignore_spec.match_file(file_rel_path)):
-                 files_to_print.append(f)
-
+                files_to_print.append(f)
+        
         for i, f in enumerate(files_to_print):
             connector = '└── ' if i == len(files_to_print) - 1 else '├── '
             tree_lines.append(f"{sub_indent}{connector}{f}")
             
     return "\n".join(tree_lines)
-
 
 def create_code_bundle(project_path, output_file, extensions, exclude_dirs):
     project_root = os.path.abspath(project_path)
@@ -88,6 +72,8 @@ def create_code_bundle(project_path, output_file, extensions, exclude_dirs):
             outfile.write(tree_structure)
             outfile.write("\n\n" + "=" * 80 + "\n\n")
 
+        # Tạo danh sách tất cả các file cần xử lý trước
+        files_to_process = []
         for dirpath, dirnames, filenames in os.walk(project_root, topdown=True):
             dirnames[:] = [d for d in dirnames if d not in exclude_dirs and not d.startswith('.')]
             
@@ -95,26 +81,27 @@ def create_code_bundle(project_path, output_file, extensions, exclude_dirs):
             if gitignore_spec and gitignore_spec.match_file(relative_dir_path if relative_dir_path != '.' else ''):
                 continue
 
-            for filename in sorted(filenames):
+            for filename in filenames:
                 relative_file_path = os.path.relpath(os.path.join(dirpath, filename), project_root)
-                if (gitignore_spec and gitignore_spec.match_file(relative_file_path)):
-                    continue
+                if not (gitignore_spec and gitignore_spec.match_file(relative_file_path)):
+                    if filename.endswith(tuple(extensions)):
+                        files_to_process.append(os.path.join(dirpath, filename))
+        
+        print(f"   Tìm thấy {len(files_to_process)} file code. Bắt đầu tổng hợp nội dung...")
 
-                if filename.endswith(tuple(extensions)):
-                    file_path = os.path.join(dirpath, filename)
-                    print(f"   Đang xử lý: {relative_file_path}")
-
-                    try:
-                        with codecs.open(file_path, 'r', 'utf-8') as infile:
-                            content = infile.read()
-                        
-                        with codecs.open(output_path, 'a', 'utf-8') as outfile:
-                            outfile.write(f"--- FILE: {relative_file_path} ---\n\n")
-                            outfile.write(content)
-                            outfile.write("\n\n" + "=" * 80 + "\n\n")
-
-                    except Exception as e:
-                        print(f"   [LỖI] Không thể đọc file {relative_file_path}: {e}")
+        # Vòng lặp chính với thanh tiến trình tqdm
+        for file_path in tqdm(sorted(files_to_process), desc="   Đang xử lý", unit=" file"):
+            relative_path = os.path.relpath(file_path, project_root)
+            try:
+                with codecs.open(file_path, 'r', 'utf-8') as infile:
+                    content = infile.read()
+                
+                with codecs.open(output_path, 'a', 'utf-8') as outfile:
+                    outfile.write(f"--- FILE: {relative_path} ---\n\n")
+                    outfile.write(content)
+                    outfile.write("\n\n" + "=" * 80 + "\n\n")
+            except Exception as e:
+                tqdm.write(f"   [LỖI] Không thể đọc file {relative_path}: {e}") # Dùng tqdm.write để không làm hỏng thanh progress
 
         print(f"\n✅ Hoàn thành! Toàn bộ code đã được ghi vào file: {output_path}")
 
