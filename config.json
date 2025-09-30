@@ -1,0 +1,56 @@
+{
+  "profiles": {
+    "default": {
+      "description": "Một bộ tổng hợp các đuôi file phổ biến nhất.",
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".html", ".css", ".py", ".cs"]
+    },
+    "web-basic": {
+      "description": "Dành cho các dự án web tĩnh cơ bản.",
+      "extensions": [".html", ".css", ".js", ".json", ".md"]
+    },
+    "react": {
+      "description": "Dành cho dự án React/React Native, Next.js.",
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".md"]
+    },
+    "vue": {
+      "description": "Dành cho dự án Vue.js/Nuxt.js.",
+      "extensions": [".vue", ".js", ".ts", ".css", ".scss", ".json", ".md"]
+    },
+    "svelte": {
+      "description": "Dành cho dự án Svelte/SvelteKit.",
+      "extensions": [".svelte", ".js", ".ts", ".css", ".json", ".md"]
+    },
+    "python": {
+      "description": "Dành cho các dự án Python (Django, Flask,...).",
+      "extensions": [".py", ".json", ".md", ".txt", ".toml", ".ini", ".html"]
+    },
+    "dotnet-webapi": {
+      "description": "Dành cho dự án ASP.NET Core Web API.",
+      "extensions": [".cs", ".csproj", ".sln", ".json", ".appsettings.json"]
+    },
+    "dotnet-mvc": {
+      "description": "Dành cho dự án ASP.NET Core MVC/Razor Pages.",
+      "extensions": [".cs", ".cshtml", ".razor", ".csproj", ".sln", ".json"]
+    },
+    "java-spring": {
+        "description": "Dành cho dự án Java Spring Boot.",
+        "extensions": [".java", ".xml", ".properties", "gradle", ".yml", ".json"]
+    },
+    "godot": {
+      "description": "Dành cho dự án Godot Engine dùng GDScript.",
+      "extensions": [".gd", ".tscn", ".tres", ".godot", ".gdshader"]
+    },
+    "godot-csharp": {
+      "description": "Dành cho dự án Godot Engine dùng C#.",
+      "extensions": [".cs", ".tscn", ".tres", ".godot", ".gdshader", ".csproj", ".sln"]
+    },
+    "unity": {
+        "description": "Dành cho dự án game Unity.",
+        "extensions": [".cs", ".shader", ".unity", ".prefab", ".asmdef"]
+    },
+    "flutter": {
+        "description": "Dành cho dự án ứng dụng Flutter.",
+        "extensions": [".dart", ".yaml", ".json"]
+    }
+  }
+}
