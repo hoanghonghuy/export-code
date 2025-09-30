@@ -1,4 +1,4 @@
-`Read this in: [**English**](./README.md)`
+Read this in: [**English**](./README.md)
 # ⚙️ Công cụ Export Code To Text
 
 Đây là một công cụ dòng lệnh (CLI) được viết bằng Python giúp bạn nhanh chóng quét toàn bộ một dự án, vẽ ra cấu trúc cây thư mục và gom nội dung của tất cả các file code vào một file text duy nhất. Rất hữu ích khi cần chia sẻ tổng quan dự án hoặc đưa code vào các mô hình ngôn ngữ lớn (LLM).

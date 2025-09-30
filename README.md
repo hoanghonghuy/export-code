@@ -1,4 +1,4 @@
-`Read this in: [**Tiếng Việt**](./README.vi.md)`
+Read this in: [**Tiếng Việt**](./README.vi.md)
 # ⚙️ Export Code To Text Tool
 
 This is a command-line interface (CLI) tool written in Python that helps you quickly scan an entire project, draw its directory tree structure, and consolidate the content of all code files into a single text file. It's very useful for sharing a project overview or feeding code into Large Language Models (LLMs).
