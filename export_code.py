@@ -123,12 +123,10 @@ def main():
     parser.add_argument("-o", "--output", default="all_code.txt", help="Tên file output. (mặc định: all_code.txt)")
     parser.add_argument("-e", "--ext", nargs='+', default=DEFAULT_EXTENSIONS, help=f"Danh sách các đuôi file cần lấy.")
     parser.add_argument("--exclude", nargs='+', default=DEFAULT_EXCLUDE_DIRS, help=f"Thư mục cần bỏ qua (bổ sung cho .gitignore).")
-    # --- THAM SỐ MỚI ---
     parser.add_argument("--tree-only", action="store_true", help="Chỉ in ra cấu trúc cây thư mục và thoát.")
 
     args = parser.parse_args()
     
-    # --- LOGIC MỚI ---
     if args.tree_only:
         project_root = os.path.abspath(args.project_path)
         print(f"🌳 Tạo cây thư mục cho: {project_root}")
