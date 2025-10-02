@@ -18,7 +18,7 @@ def main():
     
     # Các tham số chung
     parser.add_argument("project_path", nargs='?', default=".", help="Đường dẫn dự án. (mặc định: .)")
-    parser.add_argument("-o", "--output", default="all_code.txt", help="Tên file output. (mặc định: all_code.txt)")
+    parser.add_argument("-o", "--output", help="Tên file output.")
     parser.add_argument("--exclude", nargs='+', default=DEFAULT_EXCLUDE_DIRS, help=f"Thư mục cần bỏ qua.")
     
     # Các chế độ hoạt động (không thể dùng chung)
@@ -33,10 +33,17 @@ def main():
     
     args = parser.parse_args()
 
+    output_filename = args.output
+    if not output_filename: # Nếu người dùng không tự đặt tên file
+        if args.scene_tree:
+            output_filename = 'scene_tree.txt'
+        else:
+            output_filename = 'all_code.txt'
+    
     if args.tree_only:
         project_root = os.path.abspath(args.project_path)
         print(f"🌳 Tạo cây thư mục cho: {project_root}")
-        from core.utils import get_gitignore_spec # Import tại chỗ để tránh load không cần thiết
+        from core.utils import get_gitignore_spec
         gitignore_spec = get_gitignore_spec(project_root)
         if gitignore_spec: print("   Áp dụng các quy tắc từ .gitignore")
         tree_structure = generate_tree(project_root, set(args.exclude), gitignore_spec)
@@ -45,7 +52,7 @@ def main():
         print(tree_structure)
         print("-" * 50)
     elif args.scene_tree:
-        export_godot_scene_trees(args.project_path, args.output, set(args.exclude))
+        export_godot_scene_trees(args.project_path, output_filename, set(args.exclude))
     else:
         extensions_to_use = []
         if args.ext:
@@ -62,7 +69,8 @@ def main():
             extensions_to_use = default_extensions
             print(f"   Sử dụng profile 'default': {' '.join(extensions_to_use)}")
         
-        create_code_bundle(args.project_path, args.output, extensions_to_use, set(args.exclude), args.all)
+        create_code_bundle(args.project_path, output_filename, extensions_to_use, set(args.exclude), args.all)
 
 if __name__ == "__main__":
     main()
+

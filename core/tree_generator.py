@@ -2,7 +2,7 @@ import os
 import re
 import codecs
 from tqdm import tqdm
-from .utils import get_gitignore_spec # Import từ module utils trong cùng package
+from .utils import get_gitignore_spec
 
 def generate_tree(root_dir, exclude_dirs, gitignore_spec):
     """
@@ -31,54 +31,62 @@ def generate_tree(root_dir, exclude_dirs, gitignore_spec):
             tree_lines.append(f"{sub_indent}{connector}{f}")
     return "\n".join(tree_lines)
 
-
-# --- LOGIC DÀNH CHO VIỆC PHÂN TÍCH SCENE GODOT ---
+# --- PHÂN TÍCH SCENE GODOT ---
 def parse_godot_scene(filepath):
-    nodes = {}
-    node_order = []
+    """Phân tích file .tscn để lấy cấu trúc node."""
+    raw_nodes = []
+    root_name = None
     with open(filepath, 'r', encoding='utf-8') as f:
         for line in f:
             if line.strip().startswith('[node'):
                 name_match = re.search(r'name="([^"]+)"', line)
                 type_match = re.search(r'type="([^"]+)"', line)
                 parent_match = re.search(r'parent="([^"]+)"', line)
-                if name_match and type_match:
+                
+                if name_match:
                     name = name_match.group(1)
-                    node_type = type_match.group(1)
-                    parent = parent_match.group(1) if parent_match else None
-                    node_path = name if not parent else f"{parent}/{name}"
-                    nodes[node_path] = {'name': name, 'type': node_type, 'parent': parent, 'children': []}
-                    node_order.append(node_path)
+                    node_type = type_match.group(1) if type_match else 'Unknown'
+                    parent_path = parent_match.group(1) if parent_match else None
+                    raw_nodes.append({'name': name, 'type': node_type, 'parent_path': parent_path})
+                    if parent_path is None:
+                        root_name = name
     
-    root_node = None
-    for path in node_order:
-        node = nodes[path]
-        if node['parent'] is None:
-            root_node = path
-        else:
-            parent_path = node['parent']
-            if parent_path == ".":
-                current_path_parts = path.split('/')
-                parent_path_lookup = '/'.join(current_path_parts[:-1])
-                if parent_path_lookup in nodes:
-                    nodes[parent_path_lookup]['children'].append(path)
-            elif parent_path in nodes:
-                 nodes[parent_path]['children'].append(path)
-    return root_node, nodes
+    if not root_name:
+        return None, None
 
-def format_scene_tree_recursive(node_path, nodes_dict, prefix, is_last):
+    # Tạo một map để dễ dàng truy cập thông tin và con của mỗi node
+    nodes_map = {node['name']: {'type': node['type'], 'children': []} for node in raw_nodes}
+
+    # Xây dựng cây quan hệ cha-con
+    for node in raw_nodes:
+        if node['parent_path']:
+            parent_name = node['parent_path']
+            # Trong Godot, parent="." có nghĩa là node gốc của scene
+            if parent_name == '.':
+                parent_name = root_name
+            
+            if parent_name in nodes_map:
+                nodes_map[parent_name]['children'].append(node['name'])
+
+    return root_name, nodes_map
+
+def format_scene_tree_recursive(node_name, nodes_map, prefix="", is_last=True):
+    """Đệ quy để vẽ cây cấu trúc node."""
     lines = []
-    node_info = nodes_dict.get(node_path)
+    node_info = nodes_map.get(node_name)
     if not node_info: return lines
+
     connector = "└── " if is_last else "├── "
-    lines.append(f"{prefix}{connector}{node_info['name']} ({node_info['type']})")
-    children = node_info['children']
-    for i, child_path in enumerate(children):
+    lines.append(f"{prefix}{connector}{node_name} ({node_info['type']})")
+    
+    children = node_info.get('children', [])
+    for i, child_name in enumerate(children):
         new_prefix = prefix + ("    " if is_last else "│   ")
-        lines.extend(format_scene_tree_recursive(child_path, nodes_dict, new_prefix, i == (len(children) - 1)))
+        lines.extend(format_scene_tree_recursive(child_name, nodes_map, new_prefix, i == (len(children) - 1)))
     return lines
 
 def export_godot_scene_trees(project_path, output_file, exclude_dirs):
+    """Chức năng chính để xuất cấu trúc scene Godot."""
     project_root = os.path.abspath(project_path)
     print(f"🔎 Chế độ Godot Scene Tree: Đang quét file .tscn tại {project_root}")
     gitignore_spec = get_gitignore_spec(project_root)
@@ -105,9 +113,9 @@ def export_godot_scene_trees(project_path, output_file, exclude_dirs):
             relative_path = os.path.relpath(file_path, project_root)
             outfile.write(f"--- SCENE: {relative_path} ---\n")
             try:
-                root, nodes = parse_godot_scene(file_path)
-                if root:
-                    tree_lines = format_scene_tree_recursive(root, nodes, "", True)
+                root_name, nodes_map = parse_godot_scene(file_path)
+                if root_name:
+                    tree_lines = format_scene_tree_recursive(root_name, nodes_map)
                     outfile.write("\n".join(tree_lines))
                 else:
                     outfile.write("   (Scene rỗng hoặc không có node gốc)\n")
@@ -115,3 +123,4 @@ def export_godot_scene_trees(project_path, output_file, exclude_dirs):
                 outfile.write(f"   [LỖI] Không thể phân tích file: {e}\n")
             outfile.write("\n\n" + "=" * 80 + "\n\n")
     print(f"\n✅ Hoàn thành! Cấu trúc các scene đã được ghi vào file: {output_path}")
+
