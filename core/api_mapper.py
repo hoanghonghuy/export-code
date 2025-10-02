@@ -3,7 +3,9 @@ import re
 import codecs
 import logging
 from tqdm import tqdm
-from .utils import get_gitignore_spec
+
+# Sửa đổi dòng import dưới đây
+from .utils import get_gitignore_spec, find_project_files
 
 GD_PATTERNS = {
     "class": re.compile(r"^\s*class_name\s+([A-Za-z0-9_]+)"),
@@ -69,13 +71,13 @@ def export_api_map(project_path, output_file, exclude_dirs, profiles):
     project_root = os.path.abspath(project_path)
     logging.info(f"🗺️  Chế độ API Map: Đang quét dự án tại {project_root}")
 
-    gitignore_spec = get_gitignore_spec(project_root)
     output_path = os.path.abspath(output_file)
 
     all_extensions = set()
     for profile in profiles.values():
         all_extensions.update(profile.get("extensions", []))
 
+    # Sử dụng hàm find_project_files dùng chung
     files_to_process = find_project_files(
         project_path, exclude_dirs, False, list(all_extensions)
     )

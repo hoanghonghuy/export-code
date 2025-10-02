@@ -2,7 +2,9 @@ import os
 import codecs
 import logging
 from tqdm import tqdm
-from .utils import get_gitignore_spec, is_binary
+
+# Sửa đổi dòng import dưới đây
+from .utils import find_project_files
 
 
 def analyze_file(file_path):
@@ -22,27 +24,10 @@ def export_project_stats(project_path, output_file, exclude_dirs):
     project_root = os.path.abspath(project_path)
     logging.info(f"📊 Chế độ Project Stats: Đang phân tích dự án tại {project_root}")
 
-    gitignore_spec = get_gitignore_spec(project_root)
     output_path = os.path.abspath(output_file)
 
-    files_to_analyze = []
-    for dirpath, dirnames, filenames in os.walk(project_root, topdown=True):
-        dirnames[:] = [
-            d for d in dirnames if d not in set(exclude_dirs) and not d.startswith(".")
-        ]
-        relative_dir_path = os.path.relpath(dirpath, project_root).replace(os.sep, "/")
-        if gitignore_spec and gitignore_spec.match_file(
-            relative_dir_path if relative_dir_path != "." else ""
-        ):
-            continue
-        for filename in filenames:
-            file_path = os.path.join(dirpath, filename)
-            relative_file_path = os.path.relpath(file_path, project_root).replace(
-                os.sep, "/"
-            )
-            if not (gitignore_spec and gitignore_spec.match_file(relative_file_path)):
-                if not is_binary(file_path):
-                    files_to_analyze.append(file_path)
+    # Sử dụng hàm find_project_files dùng chung, quét tất cả file text
+    files_to_analyze = find_project_files(project_path, exclude_dirs, True, [])
 
     if not files_to_analyze:
         logging.info("   Không tìm thấy file nào để phân tích.")
