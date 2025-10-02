@@ -11,7 +11,7 @@ from inquirer.themes import GreenPassion
 init(autoreset=True)
 
 def _colorize_diff(diff_lines):
-    """Thêm màu sắc cho output của diff."""
+    """Thêm màu sắc cho output của diff để dễ đọc."""
     colored_lines = []
     for line in diff_lines:
         if line.startswith('+'):
@@ -38,14 +38,11 @@ def parse_bundle_file(bundle_path):
         with open(bundle_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Tách các khối file bằng dấu phân cách
         file_blocks = re.split(r'\n={80}\n', content)
         
-        # Bỏ qua phần header của file bundle
         initial_header_pattern = r'^Tổng hợp code từ dự án:.*?\n={80}\n\n.*?\n={80}\n\n'
-        if file_blocks:
-            if re.match(initial_header_pattern, file_blocks[0], re.DOTALL):
-                 file_blocks = file_blocks[1:]
+        if file_blocks and re.match(initial_header_pattern, file_blocks[0], re.DOTALL):
+             file_blocks = file_blocks[1:]
 
         for block in file_blocks:
             block = block.strip()
@@ -62,9 +59,10 @@ def parse_bundle_file(bundle_path):
         
     return file_contents
 
-def apply_changes(project_root, bundle_path):
+def apply_changes(project_root, bundle_path, show_diff=False):
     """
-    Đọc file bundle, so sánh, hiển thị diff và cho phép chọn file để áp dụng.
+    Đọc file bundle, so sánh, và áp dụng thay đổi.
+    Hiển thị diff view nếu show_diff là True.
     """
     bundle_data = parse_bundle_file(bundle_path)
     if not bundle_data: return
@@ -82,15 +80,12 @@ def apply_changes(project_root, bundle_path):
         
         if os.path.exists(project_file_path):
             try:
-                # Mở file và tự động chuẩn hóa ký tự xuống dòng
                 with open(project_file_path, 'r', encoding='utf-8') as f:
                     current_content_lines = f.read().splitlines()
                 
                 new_content_lines = new_content.splitlines()
 
-                # So sánh nội dung đã chuẩn hóa
                 if current_content_lines != new_content_lines:
-                    # Tạo diff để hiển thị
                     diff_text = "\n".join(list(difflib.unified_diff(
                         [l + '\n' for l in current_content_lines],
                         [l + '\n' for l in new_content_lines],
@@ -98,7 +93,7 @@ def apply_changes(project_root, bundle_path):
                     )))
                     modified_files.append({'path': relative_path, 'diff': diff_text})
             except Exception:
-                modified_files.append({'path': relative_path, 'diff': "Lỗi khi đọc file gốc. Nội dung mới sẽ được áp dụng."})
+                modified_files.append({'path': relative_path, 'diff': "Lỗi khi đọc file gốc."})
         else:
             new_files.append(relative_path)
 
@@ -106,23 +101,22 @@ def apply_changes(project_root, bundle_path):
         print("\n✅ Không có file nào thay đổi. Dự án đã được cập nhật.")
         return
 
-    # Hiển thị các thay đổi
-    print(Style.BRIGHT + "\n--- XEM TRƯỚC THAY ĐỔI ---")
-    for file_info in modified_files:
-        print(Style.BRIGHT + Fore.YELLOW + f"\n## Thay đổi trong file: {file_info['path']}")
-        print(_colorize_diff(file_info['diff'].splitlines()))
-    
-    if new_files:
-        print(Style.BRIGHT + Fore.CYAN + "\n## Các file mới sẽ được tạo:")
-        for path in new_files:
-            print(f"+ {path}")
+    if show_diff:
+        print(Style.BRIGHT + "\n--- XEM TRƯỚC THAY ĐỔI CHI TIẾT (DIFF VIEW) ---")
+        for file_info in modified_files:
+            print(Style.BRIGHT + Fore.YELLOW + f"\n## Thay đổi trong file: {file_info['path']}")
+            print(_colorize_diff(file_info['diff'].splitlines()))
+        
+        if new_files:
+            print(Style.BRIGHT + Fore.CYAN + "\n## Các file mới sẽ được tạo:")
+            for path in new_files:
+                print(f"+ {path}")
+        print("\n" + "-"*50)
 
-    # Tạo danh sách lựa chọn cho inquirer
     choices = [f"{info['path']} (thay đổi)" for info in modified_files] + [f"{path} (mới)" for path in new_files]
-    
     questions = [
         inquirer.Checkbox('files_to_apply',
-                          message="Dùng phím cách (Space) để chọn/bỏ chọn các file bạn muốn áp dụng thay đổi, Enter để xác nhận:",
+                          message="Chọn các file bạn muốn áp dụng thay đổi (dùng phím cách để chọn/bỏ chọn):",
                           choices=choices,
                           default=choices)
     ]
@@ -132,7 +126,6 @@ def apply_changes(project_root, bundle_path):
         print("\n👍 Đã hủy. Không có thay đổi nào được áp dụng.")
         return
 
-    # Áp dụng thay đổi cho các file đã chọn
     print("\n🚀 Bắt đầu áp dụng thay đổi...")
     applied_count = 0
     
