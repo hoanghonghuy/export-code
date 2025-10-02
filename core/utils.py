@@ -42,3 +42,15 @@ def is_text_file(filepath, blocksize=1024):
         return False
     return True
 
+def is_binary(filepath):
+    """
+    Kiểm tra xem một file có phải là file binary hay không bằng cách
+    đọc một đoạn nhỏ ở đầu file và tìm kiếm byte null.
+    """
+    try:
+        with open(filepath, 'rb') as f:
+            chunk = f.read(1024)
+            return b'\x00' in chunk
+    except Exception:
+        # Nếu không thể mở/đọc file, coi như là binary để bỏ qua
+        return True

@@ -4,6 +4,7 @@ from core.utils import load_profiles
 from core.tree_generator import generate_tree, export_godot_scene_trees
 from core.bundler import create_code_bundle
 from core.api_mapper import export_api_map
+from core.stats_generator import export_project_stats
 
 # --- CẤU HÌNH ---
 DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pycache__', '.godot']
@@ -25,10 +26,10 @@ def main():
     mode_group.add_argument("-a", "--all", action="store_true", help="Xuất tất cả các file dạng text.")
     mode_group.add_argument("--tree-only", action="store_true", help="Chỉ in ra cây thư mục.")
     mode_group.add_argument("--scene-tree", action="store_true", help="Chỉ xuất cấu trúc scene Godot.")
-
     mode_group.add_argument("--api-map", action="store_true", help="Tạo bản đồ API/chức năng cho dự án.")
+    mode_group.add_argument("--stats", action="store_true", help="Tạo báo cáo thống kê 'sức khỏe' dự án.")
     
-    parser.add_argument("-p", "--profile", nargs='+', choices=profiles.keys(), help="Chọn một hoặc nhiều profile có sẵn.")
+    parser.add_argument("-p", "--profile", nargs='+', choices=list(profiles.keys()), help="Chọn một hoặc nhiều profile có sẵn.")
     parser.add_argument("-e", "--ext", nargs='+', help=f"Ghi đè danh sách đuôi file.")
     
     args = parser.parse_args()
@@ -37,6 +38,7 @@ def main():
     if not output_filename:
         if args.scene_tree: output_filename = 'scene_tree.txt'
         elif args.api_map: output_filename = 'api_map.txt'
+        elif args.stats: output_filename = 'project_stats.txt'
         else: output_filename = 'all_code.txt'
     
     if args.tree_only:
@@ -54,6 +56,8 @@ def main():
         export_godot_scene_trees(args.project_path, output_filename, set(args.exclude))
     elif args.api_map:
         export_api_map(args.project_path, output_filename, set(args.exclude), profiles)
+    elif args.stats:
+        export_project_stats(args.project_path, output_filename, set(args.exclude))
     else:
         extensions_to_use = []
         if args.ext:
