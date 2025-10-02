@@ -19,7 +19,8 @@ classifiers = [
 dependencies = [
     "pathspec",
     "tqdm",
-    "inquirer"
+    "inquirer",
+    "watchdog"
 ]
 
 [project.scripts]
