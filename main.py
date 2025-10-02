@@ -16,13 +16,17 @@ DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pyc
 
 class ChangeHandler(FileSystemEventHandler):
     """Xử lý sự kiện khi file thay đổi."""
-    def __init__(self, project_path, output_file, extensions, exclude_dirs, use_all_text_files):
+    def __init__(self, project_path, output_file, extensions, exclude_dirs, use_all_text_files, output_format='txt'):
         self.project_path = project_path
         self.output_file = output_file
         self.extensions = extensions
         self.exclude_dirs = exclude_dirs
         self.use_all_text_files = use_all_text_files
-        self.output_filepath = os.path.abspath(os.path.join(project_path, output_file))
+        self.output_format = output_format
+        
+        base_output_file = os.path.splitext(output_file)[0]
+        output_file_with_ext = f"{base_output_file}.{output_format}"
+        self.output_filepath = os.path.abspath(os.path.join(project_path, output_file_with_ext))
         print("👀 Bắt đầu theo dõi thay đổi...")
 
     def on_modified(self, event):
@@ -49,7 +53,7 @@ class ChangeHandler(FileSystemEventHandler):
         if should_rebundle:
             print(f"🔄 Phát hiện thay đổi trong: {rel_path} -> Đang tổng hợp lại...")
             try:
-                create_code_bundle(self.project_path, self.output_file, self.extensions, self.exclude_dirs, self.use_all_text_files, include_tree=False)
+                create_code_bundle(self.project_path, self.output_file, self.extensions, self.exclude_dirs, self.use_all_text_files, include_tree=False, output_format=self.output_format)
                 print("✅ Tổng hợp lại thành công!")
             except Exception as e:
                 print(f"❌ Lỗi khi tổng hợp lại: {e}")
@@ -66,6 +70,7 @@ def main():
     parser.add_argument("-o", "--output", help="Tên file output.")
     parser.add_argument("--exclude", nargs='+', default=DEFAULT_EXCLUDE_DIRS, help=f"Thư mục cần bỏ qua.")
     parser.add_argument("--watch", action="store_true", help="Tự động chạy lại khi file thay đổi (chỉ áp dụng cho bundling).")
+    parser.add_argument("--format", choices=['txt', 'md'], default='txt', help="Chọn định dạng file output (txt hoặc md).")
 
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument("--apply", metavar="BUNDLE_FILE", help="Áp dụng code từ một file bundle vào dự án.")
@@ -107,8 +112,7 @@ def main():
         export_project_stats(args.project_path, args.output or 'project_stats.txt', set(args.exclude))
         return
     
-    # --- <<< THAY ĐỔI: Cấu trúc lại khối logic chọn file ---
-    output_filename = args.output or 'all_code.txt'
+    output_filename = args.output or 'all_code' # Không có đuôi file
     extensions_to_use = []
     use_all_files = False
 
@@ -125,15 +129,14 @@ def main():
             combined_extensions.update(profile_extensions)
         extensions_to_use = sorted(list(combined_extensions))
         print(f"   Sử dụng kết hợp profile '{', '.join(args.profile)}': {' '.join(extensions_to_use)}")
-    else: # Trường hợp mặc định khi không có cờ -a, -p, -e
+    else: 
         extensions_to_use = default_extensions
         print(f"   Sử dụng profile 'default': {' '.join(extensions_to_use)}")
     
-    # Chạy lần đầu
-    create_code_bundle(args.project_path, output_filename, extensions_to_use, set(args.exclude), use_all_files)
+    create_code_bundle(args.project_path, output_filename, extensions_to_use, set(args.exclude), use_all_files, output_format=args.format)
     
     if args.watch:
-        event_handler = ChangeHandler(args.project_path, output_filename, extensions_to_use, set(args.exclude), use_all_files)
+        event_handler = ChangeHandler(args.project_path, output_filename, extensions_to_use, set(args.exclude), use_all_files, output_format=args.format)
         observer = Observer()
         observer.schedule(event_handler, args.project_path, recursive=True)
         observer.start()
