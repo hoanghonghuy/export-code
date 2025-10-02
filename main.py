@@ -7,6 +7,7 @@ from core.bundler import create_code_bundle
 from core.api_mapper import export_api_map
 from core.stats_generator import export_project_stats
 from core.applier import apply_changes
+from core.todo_finder import export_todo_report
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -78,6 +79,7 @@ def main():
     mode_group.add_argument("--scene-tree", action="store_true", help="Chỉ xuất cấu trúc scene Godot.")
     mode_group.add_argument("--api-map", action="store_true", help="Tạo bản đồ API/chức năng cho dự án.")
     mode_group.add_argument("--stats", action="store_true", help="Tạo báo cáo thống kê 'sức khỏe' dự án.")
+    mode_group.add_argument("--todo", action="store_true", help="Quét và tạo báo cáo các ghi chú TODO, FIXME.")
     
     file_selection_group = parser.add_mutually_exclusive_group()
     file_selection_group.add_argument("-a", "--all", action="store_true", help="Xuất tất cả các file dạng text.")
@@ -111,7 +113,10 @@ def main():
     elif args.stats:
         export_project_stats(args.project_path, args.output or 'project_stats.txt', set(args.exclude))
         return
-    
+    elif args.todo:
+        export_todo_report(args.project_path, args.output or 'todo_report.txt', set(args.exclude))
+        return
+
     output_filename = args.output or 'all_code' # Không có đuôi file
     extensions_to_use = []
     use_all_files = False
