@@ -20,7 +20,8 @@ dependencies = [
     "pathspec",
     "tqdm",
     "inquirer",
-    "watchdog"
+    "watchdog",
+    "colorama"
 ]
 
 [project.scripts]

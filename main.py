@@ -21,6 +21,7 @@ DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pyc
 
 # --- CLASS XỬ LÝ SỰ KIỆN THAY ĐỔI FILE ---
 class ChangeHandler(FileSystemEventHandler):
+    """Xử lý sự kiện khi file thay đổi."""
     def __init__(self, project_path, output_file, extensions, exclude_dirs, use_all_text_files, output_format='txt'):
         self.project_path = project_path
         self.output_file = output_file
@@ -35,6 +36,7 @@ class ChangeHandler(FileSystemEventHandler):
         print("👀 Bắt đầu theo dõi thay đổi...")
 
     def on_modified(self, event):
+        """Được gọi khi một file bị sửa đổi."""
         if event.is_directory: return
         if os.path.abspath(event.src_path) == self.output_filepath: return
         rel_path = os.path.relpath(event.src_path, self.project_path)
@@ -55,7 +57,9 @@ class ChangeHandler(FileSystemEventHandler):
 
 # --- HÀM CHO CHẾ ĐỘ TƯƠNG TÁC ---
 def run_interactive_mode():
+    """Chạy chương trình ở chế độ menu tương tác."""
     print("👋 Chào mừng đến với Export Code Interactive Mode!")
+    
     profiles = load_profiles()
     
     questions = [
@@ -123,27 +127,21 @@ def run_interactive_mode():
         extensions_to_use = sorted(list(combined_extensions))
     
     if action == 'format_code' or action == 'lint':
-        files = find_project_files(project_path, set(DEFAULT_EXCLUDE_DIRS), use_all_files, extensions_to_use)
-        
-        # Logic chạy nhiều tool dựa trên nhiều profile
-        tools_to_run = {} # {'command': ['.ext1', '.ext2']}
         tool_key = 'formatter' if action == 'format_code' else 'linter'
-        
-        if profile_names_to_use:
-            for name in profile_names_to_use:
-                profile_data = profiles.get(name, {})
-                command = profile_data.get(tool_key)
-                if command:
-                    if command not in tools_to_run: tools_to_run[command] = set()
-                    tools_to_run[command].update(profile_data.get('extensions', []))
-        
-        if not tools_to_run:
-            print("Không tìm thấy công cụ nào được cấu hình cho profile đã chọn.")
+        if not profile_names_to_use:
+            print("Lỗi: Cần chọn ít nhất một profile để chạy format/lint trong chế độ tương tác.", file=sys.stderr)
             return
 
-        for command, exts in tools_to_run.items():
-            files_for_tool = [f for f in files if f.endswith(tuple(exts))]
-            run_quality_tool(tool_key, command, files_for_tool)
+        for profile_name in profile_names_to_use:
+            profile_data = profiles.get(profile_name, {})
+            tool_info = profile_data.get(tool_key)
+            if tool_info and tool_info.get('command') and tool_info.get('extensions'):
+                command = tool_info['command']
+                extensions_for_tool = tool_info['extensions']
+                files_for_tool = find_project_files(project_path, set(DEFAULT_EXCLUDE_DIRS), False, extensions_for_tool)
+                run_quality_tool(tool_key, command, files_for_tool)
+            else:
+                print(f"Thông báo: Profile '{profile_name}' không có cấu hình cho '{tool_key}'. Bỏ qua.")
 
     elif action == 'bundle':
         bundle_questions = [
@@ -217,53 +215,56 @@ def main():
         if args.todo: export_todo_report(args.project_path, args.output or 'todo_report.txt', set(args.exclude))
         return
 
-    # Logic chung để xác định extensions
+    # Logic chung để xác định extensions cho các chế độ còn lại
     extensions_to_use, use_all_files = [], False
     profile_names_to_use = args.profile or []
     if args.all:
         use_all_files = True
-        if not (args.format_code or args.lint): print("   Sử dụng chế độ quét tất cả file text.")
     elif args.ext:
         extensions_to_use = args.ext
-        if not (args.format_code or args.lint): print(f"   Sử dụng danh sách đuôi file tùy chỉnh: {' '.join(extensions_to_use)}")
     elif args.profile:
         combined_extensions = set()
         for name in profile_names_to_use: combined_extensions.update(profiles.get(name, {}).get('extensions', []))
         extensions_to_use = sorted(list(combined_extensions))
-        if not (args.format_code or args.lint): print(f"   Sử dụng kết hợp profile '{', '.join(args.profile)}': {' '.join(extensions_to_use)}")
     else:
         extensions_to_use = default_extensions
-        if not (args.format_code or args.lint): print(f"   Sử dụng profile 'default': {' '.join(extensions_to_use)}")
 
     # Xử lý các chế độ quality check
     if args.format_code or args.lint:
-        files = find_project_files(args.project_path, set(args.exclude), use_all_files, extensions_to_use)
         tool_key = 'formatter' if args.format_code else 'linter'
-        
-        # Nếu không có profile, mặc định dùng 'python' và 'web-basic'
         if not profile_names_to_use:
-            profile_names_to_use = ['python', 'web-basic']
-        
-        tools_to_run = {}
-        for name in profile_names_to_use:
-            profile_data = profiles.get(name, {})
-            command = profile_data.get(tool_key)
-            if command:
-                if command not in tools_to_run: tools_to_run[command] = set()
-                tools_to_run[command].update(profile_data.get('extensions', []))
-
-        if not tools_to_run:
-            print("Không tìm thấy công cụ nào được cấu hình cho profile đã chọn.")
+            print("Lỗi: Cần chỉ định profile với cờ -p (ví dụ: -p python) để chạy format/lint.", file=sys.stderr)
             return
 
-        for command, exts in tools_to_run.items():
-            files_for_tool = [f for f in files if f.endswith(tuple(exts))]
+        print(f"   Sử dụng profile cho '{tool_key}': '{', '.join(profile_names_to_use)}'")
+        for profile_name in profile_names_to_use:
+            profile_data = profiles.get(profile_name)
+            if not profile_data:
+                print(f"Cảnh báo: Không tìm thấy profile '{profile_name}'. Bỏ qua.", file=sys.stderr)
+                continue
+            
+            tool_info = profile_data.get(tool_key)
+            if not tool_info or not tool_info.get('command') or not tool_info.get('extensions'):
+                print(f"Thông báo: Profile '{profile_name}' không có cấu hình cho '{tool_key}'. Bỏ qua.")
+                continue
+
+            command = tool_info['command']
+            extensions_for_tool = tool_info['extensions']
+            files_for_tool = find_project_files(args.project_path, set(args.exclude), False, extensions_for_tool)
             run_quality_tool(tool_key, command, files_for_tool)
         return
 
     # Chế độ mặc định: Bundling
+    if not use_all_files:
+        if args.ext: print(f"   Sử dụng danh sách đuôi file tùy chỉnh: {' '.join(extensions_to_use)}")
+        elif args.profile: print(f"   Sử dụng kết hợp profile '{', '.join(args.profile)}': {' '.join(extensions_to_use)}")
+        else: print(f"   Sử dụng profile 'default': {' '.join(extensions_to_use)}")
+    else:
+        print("   Sử dụng chế độ quét tất cả file text.")
+
     output_filename = args.output or 'all_code'
     create_code_bundle(args.project_path, output_filename, extensions_to_use, set(args.exclude), use_all_files, output_format=args.format)
+    
     if args.watch:
         event_handler = ChangeHandler(args.project_path, output_filename, extensions_to_use, set(args.exclude), use_all_files, output_format=args.format)
         observer = Observer()
