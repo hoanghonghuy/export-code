@@ -31,62 +31,73 @@ def generate_tree(root_dir, exclude_dirs, gitignore_spec):
             tree_lines.append(f"{sub_indent}{connector}{f}")
     return "\n".join(tree_lines)
 
+
 # --- PHÂN TÍCH SCENE GODOT ---
 def parse_godot_scene(filepath):
-    """Phân tích file .tscn để lấy cấu trúc node."""
-    raw_nodes = []
-    root_name = None
+    """
+    Phân tích file .tscn để xây dựng cây cấu trúc node, bao gồm cả scene được instance.
+    """
+    ext_resources = {}
+    nodes_data = {}  # Lưu trữ thông tin thô của node bằng tên
+    root_node_name = None
+
     with open(filepath, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.strip().startswith('[node'):
-                name_match = re.search(r'name="([^"]+)"', line)
-                type_match = re.search(r'type="([^"]+)"', line)
-                parent_match = re.search(r'parent="([^"]+)"', line)
-                
-                if name_match:
-                    name = name_match.group(1)
-                    node_type = type_match.group(1) if type_match else 'Unknown'
-                    parent_path = parent_match.group(1) if parent_match else None
-                    raw_nodes.append({'name': name, 'type': node_type, 'parent_path': parent_path})
-                    if parent_path is None:
-                        root_name = name
+        content = f.read()
+
+    # 1. Đọc tất cả các external resources (ExtResource)
+    ext_res_pattern = re.compile(r'\[ext_resource\s+type="PackedScene"\s+uid="[^"]+"\s+path="res://([^"]+)"\s+id="([^"]+)"\]')
+    for match in ext_res_pattern.finditer(content):
+        path, res_id = match.groups()
+        ext_resources[res_id] = os.path.basename(path)
+
+    # 2. Đọc tất cả các node và thông tin của chúng
+    node_pattern = re.compile(r'\[node\s+name="([^"]+)"(?:\s+type="([^"]+)")?(?:\s+parent="([^"]+)")?(?:\s+instance=ExtResource\("([^"]+)"\))?.*?\]')
+    for match in node_pattern.finditer(content):
+        name, node_type, parent_path, instance_id = match.groups()
+        
+        node_display_type = "Unknown"
+        if node_type:
+            node_display_type = node_type
+        elif instance_id and instance_id in ext_resources:
+            node_display_type = ext_resources[instance_id]
+
+        nodes_data[name] = {'type': node_display_type, 'parent': parent_path, 'children': []}
+        if parent_path is None:
+            root_node_name = name
     
-    if not root_name:
-        return None, None
+    if not root_node_name:
+        return None
 
-    # Tạo một map để dễ dàng truy cập thông tin và con của mỗi node
-    nodes_map = {node['name']: {'type': node['type'], 'children': []} for node in raw_nodes}
+    # 3. Xây dựng cây quan hệ cha-con
+    for name, data in nodes_data.items():
+        parent_path = data['parent']
+        if parent_path:
+            # parent="." nghĩa là con của node gốc
+            parent_name = root_node_name if parent_path == "." else parent_path
+            if parent_name in nodes_data:
+                nodes_data[parent_name]['children'].append(nodes_data[name])
+                # Thêm tên để đệ quy cho dễ
+                nodes_data[name]['name'] = name
+    
+    return nodes_data.get(root_node_name)
 
-    # Xây dựng cây quan hệ cha-con
-    for node in raw_nodes:
-        if node['parent_path']:
-            parent_name = node['parent_path']
-            # Trong Godot, parent="." có nghĩa là node gốc của scene
-            if parent_name == '.':
-                parent_name = root_name
-            
-            if parent_name in nodes_map:
-                nodes_map[parent_name]['children'].append(node['name'])
 
-    return root_name, nodes_map
-
-def format_scene_tree_recursive(node_name, nodes_map, prefix="", is_last=True):
-    """Đệ quy để vẽ cây cấu trúc node."""
+def format_scene_tree_recursive(node_data, prefix="", is_last=True):
+    """Đệ quy để vẽ cây cấu trúc node từ object đã được xây dựng."""
+    if not node_data:
+        return []
+    
     lines = []
-    node_info = nodes_map.get(node_name)
-    if not node_info: return lines
-
     connector = "└── " if is_last else "├── "
-    lines.append(f"{prefix}{connector}{node_name} ({node_info['type']})")
+    lines.append(f"{prefix}{connector}{node_data['name']} ({node_data['type']})")
     
-    children = node_info.get('children', [])
-    for i, child_name in enumerate(children):
+    children = node_data.get('children', [])
+    for i, child_data in enumerate(children):
         new_prefix = prefix + ("    " if is_last else "│   ")
-        lines.extend(format_scene_tree_recursive(child_name, nodes_map, new_prefix, i == (len(children) - 1)))
+        lines.extend(format_scene_tree_recursive(child_data, new_prefix, i == (len(children) - 1)))
     return lines
 
 def export_godot_scene_trees(project_path, output_file, exclude_dirs):
-    """Chức năng chính để xuất cấu trúc scene Godot."""
     project_root = os.path.abspath(project_path)
     print(f"🔎 Chế độ Godot Scene Tree: Đang quét file .tscn tại {project_root}")
     gitignore_spec = get_gitignore_spec(project_root)
@@ -113,9 +124,10 @@ def export_godot_scene_trees(project_path, output_file, exclude_dirs):
             relative_path = os.path.relpath(file_path, project_root)
             outfile.write(f"--- SCENE: {relative_path} ---\n")
             try:
-                root_name, nodes_map = parse_godot_scene(file_path)
-                if root_name:
-                    tree_lines = format_scene_tree_recursive(root_name, nodes_map)
+                root_node_data = parse_godot_scene(file_path)
+                if root_node_data:
+                    root_node_data['name'] = os.path.basename(file_path).replace('.tscn', '')
+                    tree_lines = format_scene_tree_recursive(root_node_data)
                     outfile.write("\n".join(tree_lines))
                 else:
                     outfile.write("   (Scene rỗng hoặc không có node gốc)\n")
