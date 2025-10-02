@@ -61,7 +61,8 @@ def parse_godot_scene(filepath):
         elif instance_id and instance_id in ext_resources:
             node_display_type = ext_resources[instance_id]
 
-        nodes_data[name] = {'type': node_display_type, 'parent': parent_path, 'children': []}
+        # <<< THAY ĐỔI: Thêm 'name' và 'parent_path' vào data ngay từ đầu
+        nodes_data[name] = {'name': name, 'type': node_display_type, 'parent_path': parent_path, 'children': []}
         if parent_path is None:
             root_node_name = name
     
@@ -70,14 +71,19 @@ def parse_godot_scene(filepath):
 
     # 3. Xây dựng cây quan hệ cha-con
     for name, data in nodes_data.items():
-        parent_path = data['parent']
+        parent_path = data['parent_path']
         if parent_path:
+            parent_name = None
             # parent="." nghĩa là con của node gốc
-            parent_name = root_node_name if parent_path == "." else parent_path
-            if parent_name in nodes_data:
-                nodes_data[parent_name]['children'].append(nodes_data[name])
-                # Thêm tên để đệ quy cho dễ
-                nodes_data[name]['name'] = name
+            if parent_path == ".":
+                parent_name = root_node_name
+            else:
+                # <<< THAY ĐỔI: Lấy tên node cha thực sự bằng cách tách phần cuối của đường dẫn
+                parent_name = parent_path.split('/')[-1]
+            
+            if parent_name and parent_name in nodes_data:
+                # Gắn node con (data) vào danh sách children của node cha
+                nodes_data[parent_name]['children'].append(data)
     
     return nodes_data.get(root_node_name)
 
