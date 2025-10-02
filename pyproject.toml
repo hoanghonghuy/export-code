@@ -21,7 +21,8 @@ dependencies = [
     "tqdm",
     "inquirer",
     "watchdog",
-    "colorama"
+    "colorama",
+    "colorlog"
 ]
 
 [project.scripts]

@@ -1,5 +1,6 @@
 import os
 import argparse
+import logging
 import time
 import sys
 import inquirer
@@ -15,6 +16,7 @@ from core.todo_finder import export_todo_report
 from core.quality_checker import run_quality_tool
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from core.logger_setup import setup_logging
 
 # --- CẤU HÌNH ---
 DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pycache__', '.godot']
@@ -167,6 +169,10 @@ def main():
     parser.add_argument("--format", choices=['txt', 'md'], default='txt', help="Chọn định dạng file output (txt hoặc md).")
     parser.add_argument("--review", action="store_true", help="Khi dùng với --apply, sẽ hiện diff view chi tiết trước khi áp dụng.")
 
+    verbosity_group = parser.add_mutually_exclusive_group()
+    verbosity_group.add_argument("-q", "--quiet", action="store_true", help="Chế độ im lặng, chỉ hiển thị lỗi và cảnh báo.")
+    verbosity_group.add_argument("-v", "--verbose", action="count", default=0, help="Hiển thị output chi tiết. Dùng -vv cho chi tiết hơn.")
+
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument("--apply", metavar="BUNDLE_FILE", help="Áp dụng code từ một file bundle vào dự án.")
     mode_group.add_argument("--tree-only", action="store_true", help="Chỉ in ra cây thư mục.")
@@ -183,6 +189,14 @@ def main():
     file_selection_group.add_argument("-e", "--ext", nargs='+', help=f"Chọn file theo danh sách đuôi file.")
 
     args = parser.parse_args()
+
+    setup_logging(args.verbose, args.quiet)
+
+    logging.debug(f"Tham số dòng lệnh đã nhận: {args}")
+
+    if len(sys.argv) == 1 and not (args.verbose or args.quiet):
+        run_interactive_mode()
+        return
 
     if any([args.apply, args.tree_only, args.scene_tree, args.api_map, args.stats, args.todo]):
         if args.apply: apply_changes(args.project_path, args.apply, show_diff=args.review)
