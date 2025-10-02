@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "export-code"
+version = "1.0.0"
+authors = [
+  { name="Hoang Hong Huy", email="your.email@example.com" },
+]
+description = "A tool to bundle, analyze, and manage code projects."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pathspec",
+    "tqdm",
+    "inquirer"
+]
+
+[project.scripts]
+export-code = "main:main"
