@@ -2,67 +2,99 @@
   "profiles": {
     "default": {
       "description": "Một bộ tổng hợp các đuôi file phổ biến nhất.",
-      "extensions": [".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".html", ".css", ".scss", ".py", ".cs", ".go"]
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".html", ".css", ".scss", ".py", ".cs", ".go"],
+      "formatter": "prettier --write --log-level warn",
+      "linter": "eslint --fix"
     },
     "web-basic": {
       "description": "Dành cho các dự án web tĩnh cơ bản.",
-      "extensions": [".html", ".css", ".scss", ".js", ".json", ".md"]
+      "extensions": [".html", ".css", ".scss", ".js", ".json", ".md"],
+      "formatter": "prettier --write --log-level warn",
+      "linter": "eslint --fix"
     },
     "react": {
       "description": "Dành cho dự án React hoặc React Native.",
-      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".md"]
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".md"],
+      "formatter": "prettier --write --log-level warn",
+      "linter": "eslint --fix"
     },
     "nextjs": {
-      "description": "Dành cho dự án Next.js (bao gồm cả SCSS).",
-      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".md"]
+      "description": "Dành cho dự án Next.js.",
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".md"],
+      "formatter": "prettier --write --log-level warn",
+      "linter": "eslint --fix"
     },
     "vue": {
       "description": "Dành cho dự án Vue.js/Nuxt.js.",
-      "extensions": [".vue", ".js", ".ts", ".css", ".scss", ".json", ".md"]
+      "extensions": [".vue", ".js", ".ts", ".css", ".scss", ".json", ".md"],
+      "formatter": "prettier --write --log-level warn",
+      "linter": "eslint --fix"
     },
     "svelte": {
       "description": "Dành cho dự án Svelte/SvelteKit.",
-      "extensions": [".svelte", ".js", ".ts", ".css", ".scss", ".json", ".md"]
+      "extensions": [".svelte", ".js", ".ts", ".css", ".scss", ".json", ".md"],
+      "formatter": "prettier --write --log-level warn",
+      "linter": "eslint --fix"
     },
     "typescript": {
       "description": "Dành cho các dự án TypeScript thuần (ví dụ: Node.js backend).",
-      "extensions": [".ts", "tsconfig.json", ".json", ".md"]
+      "extensions": [".ts", "tsconfig.json", ".json", ".md"],
+      "formatter": "prettier --write --log-level warn",
+      "linter": "eslint --fix"
     },
     "python": {
       "description": "Dành cho các dự án Python (Django, Flask,...).",
-      "extensions": [".py", ".json", ".md", ".txt", ".toml", ".ini", ".html"]
+      "extensions": [".py", ".json", ".md", ".txt", ".toml", ".ini", ".html"],
+      "formatter": "black",
+      "linter": "flake8"
     },
     "dotnet-webapi": {
       "description": "Dành cho dự án ASP.NET Core Web API.",
-      "extensions": [".cs", ".csproj", ".sln", ".json", ".appsettings.json"]
+      "extensions": [".cs", ".csproj", ".sln", ".json", ".appsettings.json"],
+      "formatter": "dotnet format",
+      "linter": null
     },
     "dotnet-mvc": {
       "description": "Dành cho dự án ASP.NET Core MVC/Razor Pages.",
-      "extensions": [".cs", ".cshtml", ".razor", ".csproj", ".sln", ".json"]
+      "extensions": [".cs", ".cshtml", ".razor", ".csproj", ".sln", ".json"],
+      "formatter": "dotnet format",
+      "linter": null
     },
     "java-spring": {
-        "description": "Dành cho dự án Java Spring Boot.",
-        "extensions": [".java", ".xml", ".properties", "gradle", ".yml", ".json"]
+      "description": "Dành cho dự án Java Spring Boot.",
+      "extensions": [".java", ".xml", ".properties", "gradle", ".yml", ".json"],
+      "formatter": null,
+      "linter": null
     },
     "golang": {
-        "description": "Dành cho dự án Go (Golang).",
-        "extensions": [".go", "go.mod", "go.sum", ".json", ".yml", ".toml"]
+      "description": "Dành cho dự án Go (Golang).",
+      "extensions": [".go", "go.mod", "go.sum", ".json", ".yml", ".toml"],
+      "formatter": "gofmt -w",
+      "linter": "golangci-lint run"
     },
     "godot": {
       "description": "Dành cho dự án Godot Engine dùng GDScript.",
-      "extensions": [".gd", ".tscn", ".tres", ".godot", ".gdshader"]
+      "extensions": [".gd", ".tscn", ".tres", ".godot", ".gdshader"],
+      "formatter": null,
+      "linter": null
     },
     "godot-csharp": {
       "description": "Dành cho dự án Godot Engine dùng C#.",
-      "extensions": [".cs", ".tscn", ".tres", ".godot", ".gdshader", ".csproj", ".sln"]
+      "extensions": [".cs", ".tscn", ".tres", ".godot", ".gdshader", ".csproj", ".sln"],
+      "formatter": "dotnet format",
+      "linter": null
     },
     "unity": {
-        "description": "Dành cho dự án game Unity.",
-        "extensions": [".cs", ".shader", ".unity", ".prefab", ".asmdef"]
+      "description": "Dành cho dự án game Unity.",
+      "extensions": [".cs", ".shader", ".unity", ".prefab", ".asmdef"],
+      "formatter": "dotnet format",
+      "linter": null
     },
     "flutter": {
-        "description": "Dành cho dự án ứng dụng Flutter.",
-        "extensions": [".dart", ".yaml", ".json"]
+      "description": "Dành cho dự án ứng dụng Flutter.",
+      "extensions": [".dart", ".yaml", ".json"],
+      "formatter": "dart format",
+      "linter": "flutter analyze"
     }
   }
 }
