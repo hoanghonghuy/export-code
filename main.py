@@ -3,6 +3,7 @@ import argparse
 from core.utils import load_profiles
 from core.tree_generator import generate_tree, export_godot_scene_trees
 from core.bundler import create_code_bundle
+from core.api_mapper import export_api_map
 
 # --- CẤU HÌNH ---
 DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pycache__', '.godot']
@@ -13,32 +14,30 @@ def main():
     default_extensions = profiles.get('default', {}).get('extensions', [])
     
     parser = argparse.ArgumentParser(
-        description="Gom code dự án vào một file text duy nhất hoặc phân tích cấu trúc scene."
+        description="Gom code dự án vào một file hoặc tạo các báo cáo phân tích."
     )
     
-    # Các tham số chung
-    parser.add_argument("project_path", nargs='?', default=".", help="Đường dẫn dự án. (mặc định: .)")
+    parser.add_argument("project_path", nargs='?', default=".", help="Đường dẫn dự án.")
     parser.add_argument("-o", "--output", help="Tên file output.")
     parser.add_argument("--exclude", nargs='+', default=DEFAULT_EXCLUDE_DIRS, help=f"Thư mục cần bỏ qua.")
     
-    # Các chế độ hoạt động (không thể dùng chung)
     mode_group = parser.add_mutually_exclusive_group()
-    mode_group.add_argument("-a", "--all", action="store_true", help="Xuất tất cả các file dạng text (ghi đè -p và -e).")
-    mode_group.add_argument("--tree-only", action="store_true", help="Chỉ in ra cấu trúc cây thư mục và thoát.")
-    mode_group.add_argument("--scene-tree", action="store_true", help="Chỉ xuất cấu trúc các node trong file scene Godot (.tscn).")
+    mode_group.add_argument("-a", "--all", action="store_true", help="Xuất tất cả các file dạng text.")
+    mode_group.add_argument("--tree-only", action="store_true", help="Chỉ in ra cây thư mục.")
+    mode_group.add_argument("--scene-tree", action="store_true", help="Chỉ xuất cấu trúc scene Godot.")
+
+    mode_group.add_argument("--api-map", action="store_true", help="Tạo bản đồ API/chức năng cho dự án.")
     
-    # Tham số cho chế độ gom code
     parser.add_argument("-p", "--profile", nargs='+', choices=profiles.keys(), help="Chọn một hoặc nhiều profile có sẵn.")
-    parser.add_argument("-e", "--ext", nargs='+', help=f"Ghi đè danh sách đuôi file cần lấy.")
+    parser.add_argument("-e", "--ext", nargs='+', help=f"Ghi đè danh sách đuôi file.")
     
     args = parser.parse_args()
 
     output_filename = args.output
-    if not output_filename: # Nếu người dùng không tự đặt tên file
-        if args.scene_tree:
-            output_filename = 'scene_tree.txt'
-        else:
-            output_filename = 'all_code.txt'
+    if not output_filename:
+        if args.scene_tree: output_filename = 'scene_tree.txt'
+        elif args.api_map: output_filename = 'api_map.txt'
+        else: output_filename = 'all_code.txt'
     
     if args.tree_only:
         project_root = os.path.abspath(args.project_path)
@@ -53,6 +52,8 @@ def main():
         print("-" * 50)
     elif args.scene_tree:
         export_godot_scene_trees(args.project_path, output_filename, set(args.exclude))
+    elif args.api_map:
+        export_api_map(args.project_path, output_filename, set(args.exclude), profiles)
     else:
         extensions_to_use = []
         if args.ext:
