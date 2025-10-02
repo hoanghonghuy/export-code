@@ -5,6 +5,7 @@ from core.tree_generator import generate_tree, export_godot_scene_trees
 from core.bundler import create_code_bundle
 from core.api_mapper import export_api_map
 from core.stats_generator import export_project_stats
+from core.applier import apply_changes
 
 # --- CẤU HÌNH ---
 DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pycache__', '.godot']
@@ -15,24 +16,31 @@ def main():
     default_extensions = profiles.get('default', {}).get('extensions', [])
     
     parser = argparse.ArgumentParser(
-        description="Gom code dự án vào một file hoặc tạo các báo cáo phân tích."
+        description="Gom code dự án vào một file hoặc áp dụng code từ file bundle vào dự án."
     )
     
     parser.add_argument("project_path", nargs='?', default=".", help="Đường dẫn dự án.")
     parser.add_argument("-o", "--output", help="Tên file output.")
     parser.add_argument("--exclude", nargs='+', default=DEFAULT_EXCLUDE_DIRS, help=f"Thư mục cần bỏ qua.")
     
+    # Nhóm các chế độ hoạt động (chỉ được chọn 1)
     mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument("--apply", metavar="BUNDLE_FILE", help="Áp dụng code từ một file bundle vào dự án.")
     mode_group.add_argument("-a", "--all", action="store_true", help="Xuất tất cả các file dạng text.")
     mode_group.add_argument("--tree-only", action="store_true", help="Chỉ in ra cây thư mục.")
     mode_group.add_argument("--scene-tree", action="store_true", help="Chỉ xuất cấu trúc scene Godot.")
     mode_group.add_argument("--api-map", action="store_true", help="Tạo bản đồ API/chức năng cho dự án.")
     mode_group.add_argument("--stats", action="store_true", help="Tạo báo cáo thống kê 'sức khỏe' dự án.")
     
+    # Các tham số còn lại có thể dùng chung
     parser.add_argument("-p", "--profile", nargs='+', choices=list(profiles.keys()), help="Chọn một hoặc nhiều profile có sẵn.")
     parser.add_argument("-e", "--ext", nargs='+', help=f"Ghi đè danh sách đuôi file.")
     
     args = parser.parse_args()
+
+    if args.apply:
+        apply_changes(args.project_path, args.apply)
+        return
 
     output_filename = args.output
     if not output_filename:
