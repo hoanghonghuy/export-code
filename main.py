@@ -6,6 +6,7 @@ import sys
 import inquirer
 from inquirer.themes import GreenPassion
 
+from core.logger_setup import setup_logging
 from core.utils import load_profiles, find_project_files
 from core.tree_generator import generate_tree, export_godot_scene_trees
 from core.bundler import create_code_bundle
@@ -16,7 +17,6 @@ from core.todo_finder import export_todo_report
 from core.quality_checker import run_quality_tool
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from core.logger_setup import setup_logging
 
 # --- CẤU HÌNH ---
 DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pycache__', '.godot']
@@ -34,7 +34,7 @@ class ChangeHandler(FileSystemEventHandler):
         base_output_file = os.path.splitext(output_file)[0]
         output_file_with_ext = f"{base_output_file}.{output_format}"
         self.output_filepath = os.path.abspath(os.path.join(project_path, output_file_with_ext))
-        print("👀 Bắt đầu theo dõi thay đổi...")
+        logging.info("👀 Bắt đầu theo dõi thay đổi...")
 
     def on_modified(self, event):
         if event.is_directory: return
@@ -49,15 +49,16 @@ class ChangeHandler(FileSystemEventHandler):
         elif any(event.src_path.endswith(ext) for ext in self.extensions): should_rebundle = True
 
         if should_rebundle:
-            print(f"🔄 Phát hiện thay đổi trong: {rel_path} -> Đang tổng hợp lại...")
+            logging.info(f"🔄 Phát hiện thay đổi trong: {rel_path} -> Đang tổng hợp lại...")
             try:
                 create_code_bundle(self.project_path, self.output_file, self.extensions, self.exclude_dirs, self.use_all_text_files, include_tree=False, output_format=self.output_format)
-                print("✅ Tổng hợp lại thành công!")
-            except Exception as e: print(f"❌ Lỗi khi tổng hợp lại: {e}")
+                logging.info("✅ Tổng hợp lại thành công!")
+            except Exception as e: 
+                logging.error(f"Lỗi khi tổng hợp lại: {e}", exc_info=True)
 
 # --- HÀM CHO CHẾ ĐỘ TƯƠNG TÁC ---
 def run_interactive_mode():
-    print("👋 Chào mừng đến với Export Code Interactive Mode!")
+    logging.info("👋 Chào mừng đến với Export Code Interactive Mode!")
     profiles = load_profiles()
     
     questions = [
@@ -74,7 +75,7 @@ def run_interactive_mode():
     ]
     answers = inquirer.prompt(questions, theme=GreenPassion())
     if not answers or answers['action'] == 'exit':
-        print("👋 Tạm biệt!"); return
+        logging.info("👋 Tạm biệt!"); return
     action = answers['action']
     
     common_questions = [inquirer.Text('project_path', message="Nhập đường dẫn dự án", default='.')]
@@ -90,10 +91,10 @@ def run_interactive_mode():
         export_todo_report(project_path, output_file or 'todo_report.txt', set(DEFAULT_EXCLUDE_DIRS))
     elif action == 'tree_only':
         project_root = os.path.abspath(project_path)
-        print(f"🌳 Tạo cây thư mục cho: {project_root}")
+        logging.info(f"🌳 Tạo cây thư mục cho: {project_root}")
         from core.utils import get_gitignore_spec
         gitignore_spec = get_gitignore_spec(project_root)
-        if gitignore_spec: print("   Áp dụng các quy tắc từ .gitignore")
+        if gitignore_spec: logging.info("   Áp dụng các quy tắc từ .gitignore")
         tree_structure = generate_tree(project_root, set(DEFAULT_EXCLUDE_DIRS), gitignore_spec)
         print("-" * 50); print(f"{os.path.basename(project_root)}/"); print(tree_structure); print("-" * 50)
     
@@ -122,7 +123,7 @@ def run_interactive_mode():
         if action == 'format_code' or action == 'lint':
             tool_key = 'formatter' if action == 'format_code' else 'linter'
             if not profile_names_to_use:
-                print("Lỗi: Cần chọn ít nhất một profile để chạy format/lint.", file=sys.stderr)
+                logging.error("Lỗi: Cần chọn ít nhất một profile để chạy format/lint trong chế độ tương tác.")
                 return
 
             for profile_name in profile_names_to_use:
@@ -133,7 +134,7 @@ def run_interactive_mode():
                     files_for_tool = find_project_files(project_path, set(DEFAULT_EXCLUDE_DIRS), False, extensions_for_tool)
                     run_quality_tool(tool_key, command, files_for_tool)
                 else:
-                    print(f"Thông báo: Profile '{profile_name}' không có cấu hình cho '{tool_key}'. Bỏ qua.")
+                    logging.info(f"Thông báo: Profile '{profile_name}' không có cấu hình cho '{tool_key}'. Bỏ qua.")
 
         elif action == 'bundle':
             bundle_questions = [
@@ -151,24 +152,19 @@ def run_interactive_mode():
                 try:
                     while True: time.sleep(1)
                 except KeyboardInterrupt:
-                    observer.stop(); print("\n🛑 Đã dừng theo dõi.")
+                    observer.stop(); logging.info("\n🛑 Đã dừng theo dõi.")
                 observer.join()
 
 # --- HÀM MAIN XỬ LÝ DÒNG LỆNH ---
 def main():
-    if len(sys.argv) == 1:
-        run_interactive_mode(); return
-
-    profiles = load_profiles()
-    default_extensions = profiles.get('default', {}).get('extensions', [])
     parser = argparse.ArgumentParser(description="Công cụ gom, phân tích và quản lý code dự án.")
     parser.add_argument("project_path", nargs='?', default=".", help="Đường dẫn dự án.")
     parser.add_argument("-o", "--output", help="Tên file output.")
     parser.add_argument("--exclude", nargs='+', default=DEFAULT_EXCLUDE_DIRS, help=f"Thư mục cần bỏ qua.")
     parser.add_argument("--watch", action="store_true", help="Tự động chạy lại khi file thay đổi.")
-    parser.add_argument("--format", choices=['txt', 'md'], default='txt', help="Chọn định dạng file output (txt hoặc md).")
-    parser.add_argument("--review", action="store_true", help="Khi dùng với --apply, sẽ hiện diff view chi tiết trước khi áp dụng.")
-
+    parser.add_argument("--format", choices=['txt', 'md'], default='txt', help="Chọn định dạng file output.")
+    parser.add_argument("--review", action="store_true", help="Khi dùng với --apply, sẽ hiện diff view chi tiết.")
+    
     verbosity_group = parser.add_mutually_exclusive_group()
     verbosity_group.add_argument("-q", "--quiet", action="store_true", help="Chế độ im lặng, chỉ hiển thị lỗi và cảnh báo.")
     verbosity_group.add_argument("-v", "--verbose", action="count", default=0, help="Hiển thị output chi tiết. Dùng -vv cho chi tiết hơn.")
@@ -185,27 +181,28 @@ def main():
 
     file_selection_group = parser.add_mutually_exclusive_group()
     file_selection_group.add_argument("-a", "--all", action="store_true", help="Chọn tất cả các file dạng text.")
-    file_selection_group.add_argument("-p", "--profile", nargs='+', choices=list(profiles.keys()), help="Chọn file theo profile có sẵn.")
+    file_selection_group.add_argument("-p", "--profile", nargs='+', choices=list(profiles.keys()), help="Chọn file theo profile.")
     file_selection_group.add_argument("-e", "--ext", nargs='+', help=f"Chọn file theo danh sách đuôi file.")
 
     args = parser.parse_args()
-
     setup_logging(args.verbose, args.quiet)
-
     logging.debug(f"Tham số dòng lệnh đã nhận: {args}")
 
     if len(sys.argv) == 1 and not (args.verbose or args.quiet):
         run_interactive_mode()
         return
 
+    profiles = load_profiles()
+    default_extensions = profiles.get('default', {}).get('extensions', [])
+
     if any([args.apply, args.tree_only, args.scene_tree, args.api_map, args.stats, args.todo]):
         if args.apply: apply_changes(args.project_path, args.apply, show_diff=args.review)
         if args.tree_only:
             project_root = os.path.abspath(args.project_path)
-            print(f"🌳 Tạo cây thư mục cho: {project_root}")
+            logging.info(f"🌳 Tạo cây thư mục cho: {project_root}")
             from core.utils import get_gitignore_spec
             gitignore_spec = get_gitignore_spec(project_root)
-            if gitignore_spec: print("   Áp dụng các quy tắc từ .gitignore")
+            if gitignore_spec: logging.info("   Áp dụng các quy tắc từ .gitignore")
             tree_structure = generate_tree(project_root, set(args.exclude), gitignore_spec)
             print("-" * 50); print(f"{os.path.basename(project_root)}/"); print(tree_structure); print("-" * 50)
         if args.scene_tree: export_godot_scene_trees(args.project_path, args.output or 'scene_tree.txt', set(args.exclude))
@@ -218,15 +215,18 @@ def main():
     if args.format_code or args.lint:
         tool_key = 'formatter' if args.format_code else 'linter'
         if not profile_names_to_use:
-            print("Lỗi: Cần chỉ định profile với cờ -p (ví dụ: -p python) để chạy format/lint.", file=sys.stderr); return
-        print(f"   Sử dụng profile cho '{tool_key}': '{', '.join(profile_names_to_use)}'")
+            logging.error("Lỗi: Cần chỉ định profile với cờ -p (ví dụ: -p python) để chạy format/lint.")
+            return
+        logging.info(f"   Sử dụng profile cho '{tool_key}': '{', '.join(profile_names_to_use)}'")
         for profile_name in profile_names_to_use:
             profile_data = profiles.get(profile_name)
             if not profile_data:
-                print(f"Cảnh báo: Không tìm thấy profile '{profile_name}'. Bỏ qua.", file=sys.stderr); continue
+                logging.warning(f"Cảnh báo: Không tìm thấy profile '{profile_name}'. Bỏ qua.")
+                continue
             tool_info = profile_data.get(tool_key)
             if not tool_info or not tool_info.get('command') or not tool_info.get('extensions'):
-                print(f"Thông báo: Profile '{profile_name}' không có cấu hình cho '{tool_key}'. Bỏ qua."); continue
+                logging.info(f"Thông báo: Profile '{profile_name}' không có cấu hình cho '{tool_key}'. Bỏ qua.")
+                continue
             command, extensions_for_tool = tool_info['command'], tool_info['extensions']
             files_for_tool = find_project_files(args.project_path, set(args.exclude), False, extensions_for_tool)
             run_quality_tool(tool_key, command, files_for_tool)
@@ -241,11 +241,11 @@ def main():
         extensions_to_use = sorted(list(combined_extensions))
     else: extensions_to_use = default_extensions
     
-    if use_all_files: print("   Sử dụng chế độ quét tất cả file text.")
+    if use_all_files: logging.info("   Sử dụng chế độ quét tất cả file text.")
     else:
-        if args.ext: print(f"   Sử dụng danh sách đuôi file tùy chỉnh: {' '.join(extensions_to_use)}")
-        elif args.profile: print(f"   Sử dụng kết hợp profile '{', '.join(args.profile)}': {' '.join(extensions_to_use)}")
-        else: print(f"   Sử dụng profile 'default': {' '.join(extensions_to_use)}")
+        if args.ext: logging.info(f"   Sử dụng danh sách đuôi file tùy chỉnh: {' '.join(extensions_to_use)}")
+        elif args.profile: logging.info(f"   Sử dụng kết hợp profile '{', '.join(args.profile)}': {' '.join(extensions_to_use)}")
+        else: logging.info(f"   Sử dụng profile 'default': {' '.join(extensions_to_use)}")
 
     output_filename = args.output or 'all_code'
     create_code_bundle(args.project_path, output_filename, extensions_to_use, set(args.exclude), use_all_files, output_format=args.format)
@@ -257,7 +257,7 @@ def main():
         try:
             while True: time.sleep(1)
         except KeyboardInterrupt:
-            observer.stop(); print("\n🛑 Đã dừng theo dõi.")
+            observer.stop(); logging.info("\n🛑 Đã dừng theo dõi.")
         observer.join()
 
 if __name__ == "__main__":
