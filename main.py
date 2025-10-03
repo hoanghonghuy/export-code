@@ -60,22 +60,27 @@ class ChangeHandler(FileSystemEventHandler):
 def run_interactive_mode(t):
     logging.info(t.get("welcome_interactive"))
     
-    project_path_ans = inquirer.prompt([inquirer.Text('project_path', message=t.get("prompt_project_path"), default='.')], theme=GreenPassion())
-    project_path = project_path_ans['project_path']
+    ans = inquirer.prompt([inquirer.Text('project_path', message=t.get("prompt_project_path"), default='.')], theme=GreenPassion())
+    if not ans: logging.info(t.get("goodbye")); return
+    project_path = ans['project_path']
+    
     profiles = load_profiles(project_path)
 
-    action_ans = inquirer.prompt([
+    ans = inquirer.prompt([
         inquirer.List('action', message=t.get("prompt_what_to_do"),
                       choices=[(t.get("action_bundle"), 'bundle'), (t.get("action_format"), 'format_code'), (t.get("action_lint"), 'lint'), 
                                (t.get("action_stats"), 'stats'), (t.get("action_todo"), 'todo'), (t.get("action_tree"), 'tree_only'), (t.get("action_exit"), 'exit')], default='bundle')
     ], theme=GreenPassion())
-    action = action_ans.get('action')
+    if not ans: logging.info(t.get("goodbye")); return
+    action = ans.get('action')
     if not action or action == 'exit': logging.info(t.get("goodbye")); return
 
     if action in ['stats', 'todo', 'tree_only']:
         output_file = ''
         if action != 'tree_only':
-            output_file = inquirer.prompt([inquirer.Text('output', message=t.get("prompt_output_filename"))], theme=GreenPassion())['output']
+            ans = inquirer.prompt([inquirer.Text('output', message=t.get("prompt_output_filename"))], theme=GreenPassion())
+            if not ans: logging.info(t.get("goodbye")); return
+            output_file = ans['output']
         if action == 'stats': export_project_stats(t, project_path, output_file or 'project_stats.txt', set(DEFAULT_EXCLUDE_DIRS))
         elif action == 'todo': export_todo_report(t, project_path, output_file or 'todo_report.txt', set(DEFAULT_EXCLUDE_DIRS))
         elif action == 'tree_only':
@@ -87,47 +92,53 @@ def run_interactive_mode(t):
             print("-" * 50); print(f"{os.path.basename(project_root)}/"); print(tree_structure); print("-" * 50)
         return
 
-    initial_file_list, final_files_to_process = None, []
-    extensions_to_use, use_all_files, profile_names_to_use = [], False, []
-
-    source_ans = inquirer.prompt([
+    initial_file_list = None
+    ans = inquirer.prompt([
         inquirer.List('source', message=t.get("prompt_file_source"),
                       choices=[(t.get("source_walk"), 'walk'), (t.get("source_staged"), 'staged'), (t.get("source_since"), 'since')], default='walk')
     ], theme=GreenPassion())
-    source_mode = source_ans.get('source')
+    if not ans: logging.info(t.get("goodbye")); return
+    source_mode = ans.get('source')
 
     if source_mode == 'staged': initial_file_list = get_staged_files(t, project_path)
     elif source_mode == 'since':
-        branch_ans = inquirer.prompt([inquirer.Text('branch', message=t.get("prompt_branch_name"), default='main')], theme=GreenPassion())
-        initial_file_list = get_changed_files_since(t, project_path, branch_ans.get('branch'))
+        ans = inquirer.prompt([inquirer.Text('branch', message=t.get("prompt_branch_name"), default='main')], theme=GreenPassion())
+        if not ans: logging.info(t.get("goodbye")); return
+        initial_file_list = get_changed_files_since(t, project_path, ans.get('branch'))
     
     if initial_file_list is not None and not initial_file_list:
         logging.info(t.get("info_no_git_files")); return
 
+    final_files_to_process, extensions_to_use, use_all_files, profile_names_to_use = [], [], False, []
+    
     filter_mode = 'walk'
     if source_mode != 'walk':
-        filter_ans = inquirer.prompt([
+        ans = inquirer.prompt([
             inquirer.List('filter_mode', message=t.get("prompt_filter_git_list"),
                           choices=[('Không, xử lý tất cả', 'none'), ('Có, lọc theo profile', 'profile'), ('Có, lọc theo đuôi file', 'ext')], default='none')
         ], theme=GreenPassion())
-        filter_mode = filter_ans.get('filter_mode')
+        if not ans: logging.info(t.get("goodbye")); return
+        filter_mode = ans.get('filter_mode')
 
     if source_mode == 'walk' or filter_mode != 'none':
         selection_mode = filter_mode if filter_mode != 'walk' else 'profile'
         if source_mode == 'walk':
-            selection_ans = inquirer.prompt([
+            ans = inquirer.prompt([
                 inquirer.List('selection_mode', message="Bạn muốn chọn file theo cách nào?",
                               choices=[('Dùng profile', 'profile'), ('Tất cả file text', 'all'), ('Nhập đuôi file', 'ext')], default='profile'),
             ], theme=GreenPassion())
-            selection_mode = selection_ans.get('selection_mode')
+            if not ans: logging.info(t.get("goodbye")); return
+            selection_mode = ans.get('selection_mode')
         
         if selection_mode == 'all': use_all_files = True
         elif selection_mode == 'ext':
-            ext_ans = inquirer.prompt([inquirer.Text('extensions', message="Nhập các đuôi file, cách nhau bởi dấu cách")])
-            extensions_to_use = ext_ans.get('extensions', '').split()
+            ans = inquirer.prompt([inquirer.Text('extensions', message="Nhập các đuôi file, cách nhau bởi dấu cách")])
+            if not ans: logging.info(t.get("goodbye")); return
+            extensions_to_use = ans.get('extensions', '').split()
         else: # profile
-            profile_ans = inquirer.prompt([inquirer.Checkbox('selected_profiles', message="Chọn một hoặc nhiều profile", choices=list(profiles.keys()), default=['default'])])
-            profile_names_to_use = profile_ans.get('selected_profiles', [])
+            ans = inquirer.prompt([inquirer.Checkbox('selected_profiles', message="Chọn một hoặc nhiều profile", choices=list(profiles.keys()), default=['default'])])
+            if not ans: logging.info(t.get("goodbye")); return
+            profile_names_to_use = ans.get('selected_profiles', [])
             ext_set = set()
             for name in profile_names_to_use: ext_set.update(profiles.get(name, {}).get('extensions', []))
             extensions_to_use = sorted(list(ext_set))
@@ -162,12 +173,15 @@ def run_interactive_mode(t):
                 logging.info(f"Thông báo: Profile '{profile_name}' không có cấu hình cho '{tool_key}'.")
 
     elif action == 'bundle':
-        output_file_ans = inquirer.prompt([inquirer.Text('output', message=t.get("prompt_output_filename"))])
-        output_filename = output_file_ans.get('output') or 'all_code'
+        ans = inquirer.prompt([inquirer.Text('output', message=t.get("prompt_output_filename"))])
+        if not ans: logging.info(t.get("goodbye")); return
+        output_filename = ans.get('output') or 'all_code'
+        
         bundle_answers = inquirer.prompt([
             inquirer.List('output_format', message="Chọn định dạng output", choices=['txt', 'md'], default='md'),
             inquirer.Confirm('watch', message="Bật chế độ theo dõi (watch mode)?", default=False)
         ], theme=GreenPassion())
+        if not bundle_answers: logging.info(t.get("goodbye")); return
         
         create_code_bundle(t, project_path, output_filename, set(DEFAULT_EXCLUDE_DIRS), file_list=final_files_to_process, output_format=bundle_answers.get('output_format', 'md'))
         
@@ -184,12 +198,10 @@ def run_interactive_mode(t):
         elif bundle_answers.get('watch'):
             logging.warning("Chế độ Watch không khả dụng khi lấy file từ Git.")
 
-
 def main():
     t = Translator()
     parser = argparse.ArgumentParser(description=t.get("app_description", default="A tool to bundle, analyze, and manage code projects."))
     
-    # --- Các tham số chính ---
     parser.add_argument("project_path", nargs='?', default=".", help=t.get("help_project_path", default="Path to the project."))
     parser.add_argument("-o", "--output", help=t.get("help_output", default="Output filename."))
     parser.add_argument("--exclude", nargs='+', default=DEFAULT_EXCLUDE_DIRS, help=t.get("help_exclude", default="Directories to exclude."))
@@ -197,35 +209,38 @@ def main():
     parser.add_argument("--format", choices=['txt', 'md'], default='txt', help=t.get("help_format", default="Output file format."))
     parser.add_argument("--review", action="store_true", help=t.get("help_review", default="Show a detailed diff view before applying changes."))
     parser.add_argument("--lang", choices=['en', 'vi'], help=t.get("help_lang", default="Set the display language."))
+    parser.add_argument("--set-lang", choices=['en', 'vi'], help="Set and save the default language, then exit.")
     
     verbosity_group = parser.add_mutually_exclusive_group()
-    verbosity_group.add_argument("-q", "--quiet", action="store_true", help=t.get("help_quiet", default="Quiet mode, only show warnings and errors."))
-    verbosity_group.add_argument("-v", "--verbose", action="count", default=0, help=t.get("help_verbose", default="Verbose output. Use -vv for more detail."))
+    verbosity_group.add_argument("-q", "--quiet", action="store_true", help=t.get("help_quiet", default="Quiet mode."))
+    verbosity_group.add_argument("-v", "--verbose", action="count", default=0, help=t.get("help_verbose", default="Verbose output."))
 
-    # --- Nhóm chế độ hoạt động ---
     mode_group = parser.add_mutually_exclusive_group()
-    mode_group.add_argument("--apply", metavar="BUNDLE_FILE", help=t.get("help_apply", default="Apply code from a bundle file to the project."))
+    mode_group.add_argument("--apply", metavar="BUNDLE_FILE", help=t.get("help_apply", default="Apply code from a bundle file."))
     mode_group.add_argument("--tree-only", action="store_true", help=t.get("help_tree_only", default="Only print the directory tree."))
     mode_group.add_argument("--scene-tree", action="store_true", help=t.get("help_scene_tree", default="Export Godot scene tree structures."))
-    mode_group.add_argument("--api-map", action="store_true", help=t.get("help_api_map", default="Create an API/function map for the project."))
+    mode_group.add_argument("--api-map", action="store_true", help=t.get("help_api_map", default="Create an API/function map."))
     mode_group.add_argument("--stats", action="store_true", help=t.get("help_stats", default="Generate a project statistics report."))
     mode_group.add_argument("--todo", action="store_true", help=t.get("help_todo", default="Scan and report TODO/FIXME comments."))
-    mode_group.add_argument("--format-code", action="store_true", help=t.get("help_format_code", default="Automatically format code in the project."))
+    mode_group.add_argument("--format-code", action="store_true", help=t.get("help_format_code", default="Automatically format code."))
     mode_group.add_argument("--lint", action="store_true", help=t.get("help_lint", default="Lint code to find potential errors."))
 
     profiles_for_choices = load_profiles('.')
-    # --- Nhóm chọn file ---
     file_selection_group = parser.add_mutually_exclusive_group()
     file_selection_group.add_argument("-a", "--all", action="store_true", help=t.get("help_all", default="Select all text files."))
     file_selection_group.add_argument("-p", "--profile", nargs='+', choices=list(profiles_for_choices.keys()), help=t.get("help_profile", default="Select files by profile."))
     file_selection_group.add_argument("-e", "--ext", nargs='+', help=t.get("help_ext", default="Select files by extension."))
 
-    # --- Nhóm Git ---
     git_group = parser.add_mutually_exclusive_group()
     git_group.add_argument("--staged", action="store_true", help=t.get("help_staged", default="Only process files staged in Git."))
-    git_group.add_argument("--since", metavar="BRANCH", help=t.get("help_since", default="Only process files changed since a specific branch."))
+    git_group.add_argument("--since", metavar="BRANCH", help=t.get("help_since", default="Only process files changed since a branch."))
 
     args = parser.parse_args()
+
+    if args.set_lang:
+        t.set_language(args.set_lang)
+        return
+
     if args.lang:
         t.set_language(args.lang)
     
@@ -241,7 +256,7 @@ def main():
         if args.apply: apply_changes(t, args.project_path, args.apply, show_diff=args.review)
         if args.tree_only:
             project_root = os.path.abspath(args.project_path)
-            logging.info(f"🌳 Creating directory tree for: {project_root}")
+            logging.info(f"🌳 Tạo cây thư mục cho: {project_root}")
             gitignore_spec = get_gitignore_spec(project_root)
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
             tree_structure = generate_tree(project_root, set(args.exclude), gitignore_spec)
@@ -263,8 +278,7 @@ def main():
         if not initial_file_list:
             logging.info(t.get("info_no_git_files")); return
     else:
-        extensions_to_use_walk, use_all_files_walk = [], False
-        profile_names_to_use_walk = args.profile or []
+        extensions_to_use_walk, use_all_files_walk, profile_names_to_use_walk = [], False, args.profile or []
         if args.all: use_all_files_walk = True
         elif args.ext: extensions_to_use_walk = args.ext
         elif args.profile:
