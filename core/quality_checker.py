@@ -1,41 +1,39 @@
 import logging
 import subprocess
 
-
-def run_quality_tool(tool_name, command, files_to_process):
+def run_quality_tool(t, tool_name, command, files_to_process):
+    """
+    Hàm chung để chạy một công cụ chất lượng code (formatter hoặc linter).
+    """
     if not command:
-        logging.warning(
-            f"   Profile này không cấu hình cho hành động '{tool_name}'. Bỏ qua."
-        )
+        logging.warning(t.get('warn_tool_not_configured', tool=tool_name))
         return
+        
     if not files_to_process:
-        logging.info(f"   Không tìm thấy file nào phù hợp để xử lý với '{tool_name}'.")
+        logging.info(t.get('info_no_files_for_tool', tool=tool_name))
         return
 
-    logging.info(
-        f"\n▶️  Đang chạy '{command.split()[0]}' cho {len(files_to_process)} file..."
-    )
+    tool_command_name = command.split()[0]
+    logging.info(f"\n▶️  {t.get('info_running_tool', tool=tool_command_name, count=len(files_to_process))}")
+    
     full_command = command.split() + files_to_process
-
+    
     try:
-        result = subprocess.run(
-            full_command, capture_output=True, text=True, shell=False
-        )
+        result = subprocess.run(full_command, capture_output=True, text=True, shell=False, check=False)
+
         if result.stdout:
             logging.info(result.stdout.strip())
+        
         if result.stderr:
+            logging.error(f"--- {t.get('header_tool_error')} ---")
             logging.error(result.stderr.strip())
+
         if result.returncode != 0:
-            logging.warning(
-                f"⚠️  '{command.split()[0]}' đã hoàn thành nhưng có một số cảnh báo hoặc lỗi (exit code: {result.returncode})."
-            )
+            logging.warning(f"⚠️  {t.get('warn_tool_completed_with_issues', tool=tool_command_name, code=result.returncode)}")
         else:
-            logging.info(f"✅ Hoàn thành. Không có vấn đề nào được báo cáo.")
+            logging.info(f"✅ {t.get('info_tool_completed_ok', tool=tool_command_name)}")
+
     except FileNotFoundError:
-        logging.error(
-            f"❌ LỖI: Không tìm thấy lệnh '{command.split()[0]}'. Hãy chắc chắn rằng nó đã được cài đặt."
-        )
+        logging.error(t.get('error_command_not_found', command=tool_command_name))
     except Exception as e:
-        logging.error(
-            f"❌ Đã xảy ra lỗi không mong muốn khi chạy lệnh: {e}", exc_info=True
-        )
+        logging.error(t.get('error_unexpected_tool_error', tool=tool_command_name, error=e), exc_info=True)

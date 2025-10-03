@@ -1,0 +1,170 @@
+{
+  "app_description": {
+    "en": "A tool to bundle, analyze, and manage code projects.",
+    "vi": "Công cụ gom, phân tích và quản lý code dự án."
+  },
+  "lang_changed": {
+    "en": "Language changed to: {lang_name}",
+    "vi": "Đã đổi ngôn ngữ sang: {lang_name}"
+  },
+  "welcome_interactive": {
+    "en": "👋 Welcome to Export Code Interactive Mode!",
+    "vi": "👋 Chào mừng đến với Chế độ Tương tác của Export Code!"
+  },
+  "goodbye": {
+    "en": "👋 Goodbye!",
+    "vi": "👋 Tạm biệt!"
+  },
+  "prompt_what_to_do": {
+    "en": "What do you want to do?",
+    "vi": "Bạn muốn làm gì?"
+  },
+  "prompt_project_path": {
+    "en": "Enter the project path",
+    "vi": "Nhập đường dẫn dự án"
+  },
+  "prompt_output_filename": {
+    "en": "Enter the output filename (leave blank for default)",
+    "vi": "Nhập tên file output (bỏ trống để dùng tên mặc định)"
+  },
+  "prompt_file_source": {
+    "en": "Where do you want to get the file list from?",
+    "vi": "Bạn muốn lấy danh sách file từ đâu?"
+  },
+  "prompt_filter_git_list": {
+    "en": "Do you want to filter the file list from Git?",
+    "vi": "Bạn có muốn lọc danh sách file từ Git không?"
+  },
+  "prompt_branch_name": {
+    "en": "Enter the branch name to compare against",
+    "vi": "Nhập tên nhánh để so sánh"
+  },
+  "prompt_apply_select_files": {
+    "en": "Select the files you want to apply changes to (use space to toggle):",
+    "vi": "Chọn các file bạn muốn áp dụng thay đổi (dùng phím cách để chọn/bỏ chọn):"
+  },
+  "action_bundle": { "en": "Bundle code into a file", "vi": "Gom code vào một file" },
+  "action_format": { "en": "Format Code", "vi": "Tự động Format Code" },
+  "action_lint": { "en": "Lint Code", "vi": "Phân tích lỗi Code" },
+  "action_stats": { "en": "Create project statistics report", "vi": "Tạo báo cáo thống kê dự án" },
+  "action_todo": { "en": "Create TODO report", "vi": "Tạo báo cáo TODO" },
+  "action_tree": { "en": "Print directory tree only", "vi": "Chỉ in cây thư mục" },
+  "action_exit": { "en": "Exit", "vi": "Thoát" },
+  "source_walk": { "en": "Scan directory (using profiles/extensions)", "vi": "Duyệt thư mục (dùng profile/đuôi file)" },
+  "source_staged": { "en": "Get staged files from Git", "vi": "Lấy các file đã Staged trong Git" },
+  "source_since": { "en": "Get changed files since a branch", "vi": "Lấy các file thay đổi so với một nhánh" },
+  
+  "info_bundle_start": { "en": "🚀 Starting to bundle project at: {path}", "vi": "🚀 Bắt đầu gom code dự án tại: {path}" },
+  "info_found_gitignore": { "en": "   Found and applied rules from .gitignore", "vi": "   Đã tìm thấy và áp dụng các quy tắc từ .gitignore" },
+  "info_creating_tree": { "en": "   Creating directory tree...", "vi": "   Đang tạo cây thư mục..." },
+  "info_found_files_count": { "en": "   Found {count} matching files. Starting to assemble content...", "vi": "   Tìm thấy {count} file phù hợp. Bắt đầu tổng hợp nội dung..." },
+  "info_bundle_complete": { "en": "\n✅ Done! All code has been written to: {path}", "vi": "\n✅ Hoàn thành! Toàn bộ code đã được ghi vào file: {path}" },
+  
+  "info_apply_start": { "en": "🔍 Analyzing bundle file '{path}'...", "vi": "🔍 Đang phân tích file bundle '{path}'..." },
+  "info_apply_comparing": { "en": "\n🔄 Comparing files in bundle with the current project...", "vi": "\n🔄 So sánh file trong bundle với dự án hiện tại..." },
+  "info_apply_no_changes": { "en": "\n✅ No files have changed. The project is up to date.", "vi": "\n✅ Không có file nào thay đổi. Dự án đã được cập nhật." },
+  "info_apply_applying": { "en": "\n🚀 Starting to apply changes...", "vi": "\n🚀 Bắt đầu áp dụng thay đổi..." },
+  "info_apply_cancelled": { "en": "\n👍 Cancelled. No changes were applied.", "vi": "\n👍 Đã hủy. Không có thay đổi nào được áp dụng." },
+  "info_apply_complete": { "en": "\n🎉 Done! Applied changes to {count} file(s).", "vi": "\n🎉 Hoàn thành! Đã áp dụng thay đổi cho {count} file." },
+
+  "info_git_found_staged": { "en": "🔍 Found {count} file(s) in the staging area.", "vi": "🔍 Tìm thấy {count} file trong staging area." },
+  "info_git_found_since": { "en": "🔍 Found {count} changed file(s) compared to branch '{branch}'.", "vi": "🔍 Tìm thấy {count} file đã thay đổi so với nhánh '{branch}'." },
+  "info_no_git_files": { "en": "No relevant files from Git to process. Exiting.", "vi": "Không có file nào từ Git để xử lý. Kết thúc." },
+  "info_no_files_for_tool": { "en": "   No matching files found to process with '{tool}'.", "vi": "   Không tìm thấy file nào phù hợp để xử lý với '{tool}'." },
+  "info_no_files_to_analyze": { "en": "   No files found to analyze.", "vi": "   Không tìm thấy file nào để phân tích." },
+  "info_running_tool": { "en": "Running '{tool}' for {count} file(s)...", "vi": "Đang chạy '{tool}' cho {count} file..." },
+  "info_tool_completed_ok": { "en": "✅ Done with '{tool}'. No issues reported.", "vi": "✅ Hoàn thành với '{tool}'. Không có vấn đề nào được báo cáo." },
+  
+  "info_stats_start": { "en": "📊 Stats Mode: Analyzing project at {path}", "vi": "📊 Chế độ Thống kê: Đang phân tích dự án tại {path}"},
+  "info_found_files_for_stats": { "en": "   Found {count} files. Collecting metrics...", "vi": "   Tìm thấy {count} file. Bắt đầu thu thập số liệu..." },
+  "info_stats_complete": { "en": "\n✅ Done! Statistics report has been written to: {path}", "vi": "\n✅ Hoàn thành! Báo cáo thống kê đã được ghi vào file: {path}"},
+
+  "info_todo_start": { "en": "📝 TODO Report Mode: Scanning project at {path}", "vi": "📝 Chế độ Báo cáo TODO: Đang quét dự án tại {path}"},
+  "info_found_files_for_todo": { "en": "   Found {count} files. Collecting notes...", "vi": "   Tìm thấy {count} file. Bắt đầu thu thập ghi chú..."},
+  "info_todo_complete": { "en": "\n✅ Done! TODO report has been written to: {path}", "vi": "\n✅ Hoàn thành! Báo cáo TODO đã được ghi vào file: {path}"},
+
+  "info_api_map_start": { "en": "🗺️ API Map Mode: Scanning project at {path}", "vi": "🗺️ Chế độ Bản đồ API: Đang quét dự án tại {path}"},
+  "info_found_files_for_api_map": { "en": "   Found {count} code files. Starting analysis...", "vi": "   Tìm thấy {count} file code. Bắt đầu phân tích..."},
+  "info_api_map_complete": { "en": "\n✅ Done! API map has been written to: {path}", "vi": "\n✅ Hoàn thành! Bản đồ API đã được ghi vào file: {path}"},
+
+  "info_scene_tree_start": { "en": "🔎 Godot Scene Tree Mode: Scanning .tscn files at {path}", "vi": "🔎 Chế độ Cây Scene Godot: Đang quét file .tscn tại {path}"},
+  "info_no_tscn_found": { "en": "   No .tscn files found.", "vi": "   Không tìm thấy file .tscn nào." },
+  "info_scene_empty": { "en": "Scene is empty or has no root node", "vi": "Scene rỗng hoặc không có node gốc" },
+  "info_scene_tree_complete": { "en": "\n✅ Done! Scene structures have been written to: {path}", "vi": "\n✅ Hoàn thành! Cấu trúc các scene đã được ghi vào file: {path}" },
+  
+  "warn_tool_not_configured": { "en": "   Profile does not have a configuration for '{tool}'. Skipping.", "vi": "   Profile không có cấu hình cho '{tool}'. Bỏ qua." },
+  "warn_tool_completed_with_issues": { "en": "⚠️  '{tool}' completed with some warnings or errors (exit code: {code}).", "vi": "⚠️  '{tool}' đã hoàn thành nhưng có một số cảnh báo hoặc lỗi (mã thoát: {code})." },
+  
+  "error_fatal": { "en": "A fatal error occurred: {error}", "vi": "Đã xảy ra lỗi nghiêm trọng: {error}" },
+  "error_cannot_read_file": { "en": "   [ERROR] Could not read file {path}: {error}", "vi": "   [LỖI] Không thể đọc file {path}: {error}" },
+  "error_profile_needed_lint":{ "en": "Error: A profile must be specified with -p to run format/lint.", "vi": "Lỗi: Cần chỉ định profile với cờ -p để chạy format/lint." },
+  "error_git_repo_not_found": { "en": "❌ Error: Directory '{path}' is not a Git repository.", "vi": "❌ Lỗi: Thư mục '{path}' không phải là một kho chứa Git." },
+  "error_branch_not_found": { "en": "❌ Error: Branch '{branch}' not found. Please check the branch name.", "vi": "❌ Lỗi: Không tìm thấy nhánh '{branch}'. Vui lòng kiểm tra lại tên nhánh." },
+  "error_diff_failed": { "en": "❌ Error while diffing with branch '{branch}': {error}", "vi": "❌ Lỗi khi so sánh với nhánh '{branch}': {error}" },
+  "error_git_init_failed": { "en": "Failed to initialize Git repository", "vi": "Khởi tạo kho chứa Git thất bại" },
+  "error_command_not_found": { "en": "❌ ERROR: Command '{command}' not found. Make sure it is installed and in your system's PATH.", "vi": "❌ LỖI: Không tìm thấy lệnh '{command}'. Hãy chắc chắn rằng nó đã được cài đặt và có trong PATH hệ thống." },
+  "error_unexpected_tool_error": { "en": "❌ An unexpected error occurred while running '{tool}': {error}", "vi": "❌ Đã xảy ra lỗi không mong muốn khi chạy '{tool}': {error}" },
+  "error_writing_report": { "en": "\n❌ An error occurred while writing the report file: {error}", "vi": "\n❌ Đã xảy ra lỗi khi ghi file báo cáo: {error}"},
+  "error_read_original_file": { "en": "Error reading the original file. The new content will be applied.", "vi": "Lỗi khi đọc file gốc. Nội dung mới sẽ được áp dụng." },
+  "error_cannot_process_file": { "en": "   [ERROR] Cannot process file {path}: {error}", "vi": "   [LỖI] Không thể xử lý file {path}: {error}" },
+  "error_cannot_parse_scene": { "en": "Cannot parse scene file: {error}", "vi": "Không thể phân tích file scene: {error}" },
+  
+  "header_bundle_title": { "en": "Code bundle from project", "vi": "Tổng hợp code từ dự án" },
+  "header_tree_structure": { "en": "DIRECTORY STRUCTURE", "vi": "CẤU TRÚC THƯ MỤC" },
+  "header_file_content": { "en": "File Content", "vi": "Nội dung file" },
+  "header_tool_error": { "en": "Error from tool", "vi": "Lỗi từ công cụ" },
+  "header_stats_title": { "en": "PROJECT REPORT", "vi": "BÁO CÁO DỰ ÁN" },
+  "header_overview": { "en": "OVERVIEW", "vi": "TỔNG QUAN" },
+  "header_top_5_largest": { "en": "TOP 5 LARGEST FILES (BY LINE COUNT)", "vi": "TOP 5 FILE LỚN NHẤT (THEO SỐ DÒNG)" },
+  "header_by_file_type": { "en": "ANALYSIS BY FILE TYPE", "vi": "PHÂN TÍCH THEO LOẠI FILE" },
+  "header_todo_title": { "en": "PROJECT TODO REPORT", "vi": "BÁO CÁO TODO DỰ ÁN" },
+  "header_api_map_title": { "en": "PROJECT API MAP", "vi": "BẢN ĐỒ API DỰ ÁN" },
+  "header_scene_tree_title": { "en": "Scene Structure from project", "vi": "Cấu trúc Scene từ dự án" },
+
+  "title_diff_preview": { "en": "CHANGES PREVIEW", "vi": "XEM TRƯỚC THAY ĐỔI" },
+  "title_changes_in_file": { "en": "Changes in file: {path}", "vi": "Thay đổi trong file: {path}" },
+  "title_new_files": { "en": "New files to be created", "vi": "Các file mới sẽ được tạo" },
+
+  "tag_modified": { "en": "modified", "vi": "thay đổi" },
+  "tag_new": { "en": "new", "vi": "mới" },
+  "tag_created": { "en": "Created", "vi": "Đã tạo" },
+  "tag_updated": { "en": "Updated", "vi": "Đã cập nhật" },
+  "tag_error": { "en": "Error", "vi": "Lỗi" },
+
+  "stats_total_files": { "en": "Total files analyzed", "vi": "Tổng số file đã phân tích" },
+  "stats_total_lines": { "en": "Total lines", "vi": "Tổng số dòng" },
+  "stats_total_todos": { "en": "Total 'TODO's found", "vi": "Số lượng 'TODO' tìm thấy" },
+  "stats_lines_unit": { "en": "lines", "vi": "dòng" },
+  
+  "todo_total_found": { "en": "Total notes found", "vi": "Tổng số ghi chú tìm thấy" },
+  "todo_none_found": { "en": "Great! No TODO notes found.", "vi": "Tuyệt vời! Không tìm thấy ghi chú TODO nào." },
+  "todo_line_prefix": { "en": "Line", "vi": "Dòng" },
+
+  "progress_bar_processing": { "en": "   Processing", "vi": "   Đang xử lý" },
+  "progress_bar_analyzing": { "en": "   Analyzing", "vi": "   Đang phân tích" },
+  "progress_bar_scanning": { "en": "   Scanning", "vi": "   Đang quét" },
+  "progress_bar_analyzing_scenes": { "en": "   Analyzing Scenes", "vi": "   Phân tích Scene" },
+  
+  "help_project_path": { "en": "Path to the project.", "vi": "Đường dẫn tới dự án." },
+  "help_output": { "en": "Output filename.", "vi": "Tên file output." },
+  "help_exclude": { "en": "Directories to exclude.", "vi": "Các thư mục cần bỏ qua." },
+  "help_watch": { "en": "Automatically re-run on file changes (not compatible with Git flags).", "vi": "Tự động chạy lại khi file thay đổi (không dùng với các cờ Git)." },
+  "help_format": { "en": "Output file format (txt or md).", "vi": "Chọn định dạng file output (txt hoặc md)." },
+  "help_review": { "en": "When using --apply, show a detailed diff view before applying.", "vi": "Khi dùng với --apply, sẽ hiện diff view chi tiết trước khi áp dụng." },
+  "help_lang": { "en": "Set the display language (en/vi).", "vi": "Chọn ngôn ngữ hiển thị (en/vi)." },
+  "help_quiet": { "en": "Quiet mode, only show warnings and errors.", "vi": "Chế độ im lặng, chỉ hiển thị lỗi và cảnh báo." },
+  "help_verbose": { "en": "Verbose output. Use -vv for more detail.", "vi": "Hiển thị output chi tiết. Dùng -vv cho chi tiết hơn." },
+  "help_apply": { "en": "Apply code from a bundle file to the project.", "vi": "Áp dụng code từ một file bundle vào dự án." },
+  "help_tree_only": { "en": "Only print the directory tree.", "vi": "Chỉ in ra cây thư mục." },
+  "help_scene_tree": { "en": "Export Godot scene tree structures.", "vi": "Chỉ xuất cấu trúc scene Godot." },
+  "help_api_map": { "en": "Create an API/function map for the project.", "vi": "Tạo bản đồ API/chức năng cho dự án." },
+  "help_stats": { "en": "Generate a project statistics report.", "vi": "Tạo báo cáo thống kê 'sức khỏe' dự án." },
+  "help_todo": { "en": "Scan and report TODO/FIXME comments.", "vi": "Quét và tạo báo cáo các ghi chú TODO." },
+  "help_format_code": { "en": "Automatically format code in the project.", "vi": "Tự động format code trong dự án." },
+  "help_lint": { "en": "Lint code to find potential errors.", "vi": "Phân tích (lint) code để tìm lỗi." },
+  "help_all": { "en": "Select all text files.", "vi": "Chọn tất cả các file dạng text." },
+  "help_profile": { "en": "Select files by profile.", "vi": "Chọn file theo profile." },
+  "help_ext": { "en": "Select files by extension.", "vi": "Chọn file theo đuôi file." },
+  "help_staged": { "en": "Only process files staged in Git.", "vi": "Chỉ xử lý các file đã được `git add`." },
+  "help_since": { "en": "Only process files changed since a specific branch.", "vi": "Chỉ xử lý các file thay đổi so với một nhánh." }
+}

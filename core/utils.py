@@ -3,19 +3,12 @@ import json
 import logging
 import pathspec
 
-# Trỏ về thư mục cài đặt của tool
 SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GLOBAL_CONFIG_FILE = os.path.join(SCRIPT_DIR, 'config.json')
 LOCAL_CONFIG_FILENAME = '.export-code.json'
 
 def load_profiles(project_path='.'):
-    """
-    Tải các profile. Ưu tiên file .export-code.json trong thư mục dự án,
-    nếu không có thì mới dùng file config.json toàn cục.
-    """
     local_config_path = os.path.join(project_path, LOCAL_CONFIG_FILENAME)
-
-    # Ưu tiên đọc file config cục bộ
     if os.path.exists(local_config_path):
         logging.info(f"🔍 Tìm thấy file cấu hình cục bộ: {local_config_path}")
         with open(local_config_path, 'r', encoding='utf-8') as f:
@@ -25,7 +18,6 @@ def load_profiles(project_path='.'):
             except json.JSONDecodeError:
                 logging.warning(f"⚠️  Cảnh báo: File '{LOCAL_CONFIG_FILENAME}' không hợp lệ. Sẽ dùng cấu hình toàn cục.")
     
-    # Nếu không có file cục bộ, đọc file toàn cục
     if os.path.exists(GLOBAL_CONFIG_FILE):
         logging.debug(f"Không tìm thấy file cục bộ, đang dùng cấu hình toàn cục: {GLOBAL_CONFIG_FILE}")
         with open(GLOBAL_CONFIG_FILE, 'r', encoding='utf-8') as f:
