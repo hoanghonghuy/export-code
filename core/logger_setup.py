@@ -1,11 +1,14 @@
 import logging
 import colorlog
+import os
 
-def setup_logging(verbosity=0, quiet=False):
+def setup_logging(project_path, verbosity=0, quiet=False):
     """
     Cấu hình logger cho toàn bộ ứng dụng.
+    Tạo file log riêng cho từng dự án.
 
     Args:
+        project_path (str): Đường dẫn đến dự án đang chạy để đặt tên file log.
         verbosity (int): Mức độ chi tiết (0: INFO, 1: DEBUG).
         quiet (bool): Nếu True, chỉ hiển thị WARNING và các mức cao hơn.
     """
@@ -29,16 +32,36 @@ def setup_logging(verbosity=0, quiet=False):
     console_handler = colorlog.StreamHandler()
     console_handler.setFormatter(colorlog.ColoredFormatter(console_format))
     
-    # --- Cấu hình cho File (không màu) ---
-    # Ghi lại tất cả các log từ mức INFO trở lên vào file
-    file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)-8s - %(message)s')
-    file_handler = logging.FileHandler('export-code.log', mode='w', encoding='utf-8')
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(file_format)
-    
-    # Xóa các handler cũ và thêm handler mới
-    if root_logger.hasHandlers():
-        root_logger.handlers.clear()
+    # --- Cấu hình cho File (lưu vào thư mục home với tên dự án) ---
+    try:
+        # Lấy tên của thư mục dự án
+        project_name = os.path.basename(os.path.abspath(project_path))
         
-    root_logger.addHandler(console_handler)
-    root_logger.addHandler(file_handler)
+        # Lấy đường dẫn thư mục home của người dùng
+        home_dir = os.path.expanduser("~")
+        log_dir = os.path.join(home_dir, '.export-code', 'logs')
+        
+        # Tạo thư mục nếu chưa tồn tại
+        os.makedirs(log_dir, exist_ok=True)
+        
+        # Tạo đường dẫn file log với tên dự án
+        log_file_path = os.path.join(log_dir, f"{project_name}.log")
+
+        file_format = logging.Formatter('%(asctime)s - %(levelname)-8s - %(message)s')
+        file_handler = logging.FileHandler(log_file_path, mode='w', encoding='utf-8')
+        file_handler.setLevel(logging.INFO) # Luôn ghi log từ mức INFO vào file
+        file_handler.setFormatter(file_format)
+        
+        # Xóa các handler cũ và thêm handler mới
+        if root_logger.hasHandlers():
+            root_logger.handlers.clear()
+            
+        root_logger.addHandler(console_handler)
+        root_logger.addHandler(file_handler)
+        
+        logging.debug(f"File log sẽ được ghi tại: {log_file_path}")
+
+    except Exception as e:
+        # Nếu có lỗi khi tạo file log, chỉ dùng console
+        logging.basicConfig(level=log_level)
+        logging.warning(f"Không thể tạo file log. Lỗi: {e}. Log sẽ chỉ hiển thị trên console.")

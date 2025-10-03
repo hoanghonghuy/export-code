@@ -218,7 +218,8 @@ def main():
     git_group.add_argument("--since", metavar="BRANCH", help="Chỉ xử lý các file thay đổi so với một nhánh.")
 
     args = parser.parse_args()
-    setup_logging(args.verbose, args.quiet)
+    # setup_logging(args.verbose, args.quiet)
+    setup_logging(args.project_path, args.verbose, args.quiet)
     logging.debug(f"Tham số dòng lệnh đã nhận: {args}")
 
     if len(sys.argv) == 1 and not (args.verbose or args.quiet):
