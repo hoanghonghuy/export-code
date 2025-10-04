@@ -1,99 +1,148 @@
 Read this in: [**Tiếng Việt**](./README.vi.md)
 
-# ⚙️ Code Exporter Tool
+# Code Exporter Toolkit (`export-code`)
 
-A command-line interface (CLI) tool written in Python that helps you quickly scan an entire project, draw its directory tree structure, and consolidate the content of all specified source code files into a single text file. It's very useful for sharing a project overview or for feeding code into Large Language Models (LLMs).
-
----
-## ✨ Features
-
-*   🌳 **Directory Tree Generation:** Automatically creates a visual directory tree diagram.
-*   🧠 **Intelligent Ignoring:** Automatically reads and respects rules from the project's `.gitignore` file.
-*   🚀 **Automatic Text File Detection:** With the `--all` flag, it intelligently scans for all text-based files and ignores binaries, no configuration needed.
-*   🧩 **Configurable Profiles:** Use predefined configurations from a `config.json` file for common project types (e.g., Godot, React, Python) for quick execution.
-*   📦 **Code Bundling:** Concatenates the content of multiple source files into a single output file.
-*   📊 **Progress Bar:** Displays a clean progress bar when processing large projects.
-*   🔧 **Highly Customizable:** Allows overriding profiles and defaults with command-line flags.
-*   🌍 **Global Command:** Can be set up to run as a system-wide command from anywhere on your computer.
+A powerful and versatile command-line toolkit for developers, written in Python. `export-code` goes beyond simple code bundling, offering a suite of tools to analyze, manage, format, and share your projects with ease. It's an indispensable assistant for daily development workflows, code reviews, and interacting with Large Language Models (LLMs).
 
 ---
-## 🛠️ Installation
+## Key Features
 
-#### **1. Prerequisites:**
-*   **Python** must be installed. Get it from [python.org](https://www.python.org/).
-    *(Note: During installation, make sure to check the "Add Python to PATH" box)*.
+#### Advanced Code Bundling:
+*   Consolidate source code into a single `.txt` or a collapsible `.md` file for easy navigation.
+*   Intelligently ignores files based on `.gitignore` rules.
+*   Flexible file selection: by pre-configured profiles (`-p`), custom extensions (`-e`), or all text files (`-a`).
 
-#### **2. Install Required Libraries:**
-Open your terminal and run the following commands:
-```bash
-pip install pathspec
-pip install tqdm
-```
+#### Safe Code Application:
+*   Apply changes from a bundle file back into a project using `--apply`.
+*   Includes a `--review` mode that displays a colored "diff" view of all changes for your approval before writing any files, preventing accidental data loss.
 
-#### **3. Configure as a Global Command (Windows):**
+#### Code Quality Suite:
+*   Automatically format your entire project's codebase using industry-standard tools like Black, Prettier, and `dotnet format` with the `--format-code` command.
+*   Analyze your code for potential errors and style violations using linters like Flake8 and ESLint with the `--lint` command.
 
-1.  Create a dedicated folder for your tools, for example: `D:\workspace\tools`.
-2.  Inside that folder, create a subdirectory for this specific tool: `D:\workspace\tools\export-code`.
-3.  Create the necessary files inside `D:\workspace\tools\export-code`:
-    *   `export_code.py`: Save the main Python script here.
-    *   `config.json`: Create this file to define your project profiles.
-4.  Go back to the parent `D:\workspace\tools` directory. Create a new file named `export-code.bat` and paste the following content into it:
-    ```batch
-    @echo off
-    python "D:\workspace\tools\export-code\export_code.py" %*
+#### In-depth Project Analysis:
+*   Generate comprehensive project statistics (`--stats`), including line counts, file types, and TODOs.
+*   Create a dedicated report of all `TODO`, `FIXME`, and `NOTE` comments with `--todo`.
+*   Generate a high-level API map of functions and classes (`--api-map`).
+*   Visualize directory structure (`--tree-only`) and specialized Godot scene trees (`--scene-tree`).
+
+#### Smart Workflow Integration:
+*   **Git Integration:** Process only the files that matter. Use `--staged` to act on files you've added to git, or `--since <branch>` to handle only files changed since a specific branch.
+*   **Watch Mode:** Automatically re-bundle your project on file changes with `--watch`.
+*   **Interactive Mode:** Run `export-code` with no arguments for a user-friendly, step-by-step guided menu.
+
+#### Highly Customizable & User-Friendly:
+*   **Project-Specific Configuration:** Create a `.export-code.json` file in your project root to override the global configuration.
+*   **Multi-Language Support:** Switch between English (`en`) and Vietnamese (`vi`) on the fly.
+*   **Verbosity Control:** Use `-q` (quiet) or `-v` (verbose) to control the amount of output.
+*   **Centralized Logging:** Logs are neatly stored in your home directory (`~/.export-code/logs/`), keeping your project folders clean.
+
+---
+## Installation
+
+#### **1. Prerequisites**
+*   **Python 3.7+** and **Git** must be installed and available in your system's PATH.
+*   **(Optional)** For code quality features, you must install the respective tools (e.g., `pip install black flake8`, `npm install -g prettier eslint`).
+
+#### **2. Installation**
+1.  Clone this repository or download the source code to a permanent location (e.g., `D:\workspace\tools\export-code`).
+2.  Open a terminal in that directory.
+3.  Install the tool in "editable" mode. This makes the `export-code` command available globally and automatically reflects any changes you make to the source code.
+    ```bash
+    pip install -e .
     ```
-5.  Add the `D:\workspace\tools` directory to your Windows PATH environment variable.
-6.  Restart your Terminal/VS Code to apply the changes.
+4.  You can now run the `export-code` command from any directory on your system.
 
 ---
-## 🎮 Usage
-Open a terminal in the project directory you want to scan and run the command.
+## Usage Guide
 
-#### **1. Automatic Mode (Recommended for most cases):**
-Scans all valid text files in the current project.
+### Interactive Mode (Recommended for new users)
+Simply run the command without any arguments to launch a step-by-step menu.
 ```bash
-export-code --all
+export-code
 ```
 
-#### **2. Use a Predefined Profile:**
-Scan a Godot project using the 'godot' profile.
+### Bundling Examples
 ```bash
-export-code . -p godot
+# Bundle a Python project into a collapsible Markdown file
+export-code -p python --format md
+
+# Bundle all staged .ts and .tsx files into a text file
+export-code --staged -e .ts .tsx -o staged_components.txt
+
+# Watch a React project and automatically re-bundle on changes
+export-code -p react --watch
 ```
 
-#### **3. Combine Multiple Profiles:**
-Scan a project that uses both Go and Next.js.
+### Code Quality Examples
 ```bash
-export-code . -p golang nextjs
+# Format all Python files in the project
+export-code --format-code -p python
+
+# Lint all JavaScript and TypeScript files that have been staged for commit
+export-code --staged --lint -p react
 ```
 
-#### **4. Override with Custom Extensions:**
-This ignores profiles and only includes `.js` and `.css` files.
+### Analysis Examples
 ```bash
-export-code . -o my_bundle.txt -e .js .css
+# Generate a statistics report for the current project
+export-code --stats
+
+# Create a report of all TODOs and FIXMEs
+export-code --todo
 ```
 
-#### **5. Print the Directory Tree Only:**
+### Apply Mode Example
 ```bash
-export-code --tree-only
+# Safely apply changes from a bundle, reviewing each change first
+export-code --apply ../changes.txt --review
 ```
 
-#### **6. View All Options:**
+### Language Settings
 ```bash
-export-code -h
+# Run a command in Vietnamese
+export-code --lang vi --stats
+
+# Set and save Vietnamese as the default language for future use
+export-code --set-lang vi
 ```
+
 ---
-## ⚙️ Parameters
-`project_path`: (Optional) The path to the project. Defaults to the current directory (`.`).
+## Configuration
 
-`-a`, `--all`: (Optional) Automatically include all text-based files. Overrides `-p` and `-e`.
+The tool uses a flexible configuration system.
 
-`-p`, `--profile`: (Optional) A space-separated list of profile names from `config.json`.
+*   **Project-Specific Config (`.export-code.json`):** Create this file in your project's root directory to define profiles and settings specific to that project. This is the recommended approach for team collaboration.
+*   **Global Config (`config.json`):** If no local config is found, the tool falls back to the `config.json` file located in its installation directory.
 
-`-e`, `--ext`: (Optional) A space-separated list of file extensions. Overrides `-p`.
-
-`-o`, `--output`: (Optional) The name of the output file. Defaults to `all_code.txt`.
-
-`--exclude`: (Optional) A list of directories to exclude, in addition to `.gitignore`.
-
-`--tree-only`: (Optional) If present, the tool only prints the directory tree to the console and exits.
+### Example Config Structure
+```json
+{
+  "profiles": {
+    "python": {
+      "description": "For Python projects.",
+      "extensions": [".py", ".json", ".md", ".toml"],
+      "formatter": {
+        "command": "black",
+        "extensions": [".py"]
+      },
+      "linter": {
+        "command": "flake8",
+        "extensions": [".py"]
+      }
+    },
+    "react": {
+      "description": "For React projects.",
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".json"],
+      "formatter": {
+        "command": "prettier --write --log-level warn",
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".json"]
+      },
+      "linter": {
+        "command": "eslint --fix",
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
+  }
+}
+```
