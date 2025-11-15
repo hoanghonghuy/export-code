@@ -1,12 +1,14 @@
 import os
-import re
 import sys
 import codecs
+import difflib
 import logging
 import inquirer
-import difflib
+
 from colorama import init, Fore, Style
 from inquirer.themes import GreenPassion
+
+from .bundle_format import iter_bundle_sections, strip_bundle_header
 
 init(autoreset=True)
 
@@ -25,32 +27,21 @@ def _colorize_diff(diff_lines):
 
 def parse_bundle_file(t, bundle_path):
     if not os.path.exists(bundle_path):
-        logging.error(f"❌ {t.get('error_file_not_found', path=bundle_path)}")
+        logging.error(t.get('error_file_not_found', path=bundle_path))
         return None
 
     logging.info(t.get('info_apply_start', path=bundle_path))
     file_contents = {}
     try:
         with open(bundle_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        file_blocks = re.split(r'\n={80}\n', content)
-        
-        initial_header_pattern = r'^Tổng hợp code từ dự án:.*?\n={80}\n\n.*?\n={80}\n\n'
-        if file_blocks and re.match(initial_header_pattern, file_blocks[0], re.DOTALL):
-             file_blocks = file_blocks[1:]
+            raw_content = f.read()
 
-        for block in file_blocks:
-            block = block.strip()
-            if not block: continue
-            
-            header_match = re.search(r'^--- FILE: (.+) ---', block)
-            if header_match:
-                relative_path = header_match.group(1).strip().replace('\\', '/')
-                code_content = block[header_match.end():].lstrip('\r\n')
-                file_contents[relative_path] = code_content
+        normalized_content = strip_bundle_header(raw_content)
+
+        for relative_path, code_content in iter_bundle_sections(normalized_content):
+            file_contents[relative_path] = code_content
     except Exception as e:
-        logging.error(f"❌ {t.get('error_read_bundle', error=e)}", exc_info=True)
+        logging.error(t.get('error_read_bundle', error=e), exc_info=True)
         return None
         
     return file_contents

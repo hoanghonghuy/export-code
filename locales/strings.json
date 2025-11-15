@@ -43,6 +43,18 @@
     "en": "Select the files you want to apply changes to (use space to toggle):",
     "vi": "Chọn các file bạn muốn áp dụng thay đổi (dùng phím cách để chọn/bỏ chọn):"
   },
+  "prompt_selection_mode": {
+    "en": "How do you want to choose files?",
+    "vi": "Bạn muốn chọn file theo cách nào?"
+  },
+  "prompt_enter_extensions": {
+    "en": "Enter file extensions separated by spaces",
+    "vi": "Nhập các đuôi file, cách nhau bởi dấu cách"
+  },
+  "prompt_select_profiles": {
+    "en": "Select one or more profiles",
+    "vi": "Chọn một hoặc nhiều profile"
+  },
   "action_bundle": { "en": "Bundle code into a file", "vi": "Gom code vào một file" },
   "action_format": { "en": "Format Code", "vi": "Tự động Format Code" },
   "action_lint": { "en": "Lint Code", "vi": "Phân tích lỗi Code" },
@@ -53,29 +65,38 @@
   "source_walk": { "en": "Scan directory (using profiles/extensions)", "vi": "Duyệt thư mục (dùng profile/đuôi file)" },
   "source_staged": { "en": "Get staged files from Git", "vi": "Lấy các file đã Staged trong Git" },
   "source_since": { "en": "Get changed files since a branch", "vi": "Lấy các file thay đổi so với một nhánh" },
-  
+  "choice_filter_none": { "en": "No, process everything", "vi": "Không, xử lý tất cả" },
+  "choice_filter_profile": { "en": "Yes, filter by profile", "vi": "Có, lọc theo profile" },
+  "choice_filter_ext": { "en": "Yes, filter by extension", "vi": "Có, lọc theo đuôi file" },
+  "choice_use_profile": { "en": "Use profiles", "vi": "Dùng profile" },
+  "choice_all_text": { "en": "All text files", "vi": "Tất cả file text" },
+  "choice_enter_extensions": { "en": "Enter extensions manually", "vi": "Nhập đuôi file thủ công" },
   "info_bundle_start": { "en": "🚀 Starting to bundle project at: {path}", "vi": "🚀 Bắt đầu gom code dự án tại: {path}" },
   "info_found_gitignore": { "en": "   Found and applied rules from .gitignore", "vi": "   Đã tìm thấy và áp dụng các quy tắc từ .gitignore" },
   "info_creating_tree": { "en": "   Creating directory tree...", "vi": "   Đang tạo cây thư mục..." },
   "info_found_files_count": { "en": "   Found {count} matching files. Starting to assemble content...", "vi": "   Tìm thấy {count} file phù hợp. Bắt đầu tổng hợp nội dung..." },
-  "info_bundle_complete": { "en": "\n✅ Done! All code has been written to: {path}", "vi": "\n✅ Hoàn thành! Toàn bộ code đã được ghi vào file: {path}" },
-  
-  "info_apply_start": { "en": "🔍 Analyzing bundle file '{path}'...", "vi": "🔍 Đang phân tích file bundle '{path}'..." },
-  "info_apply_comparing": { "en": "\n🔄 Comparing files in bundle with the current project...", "vi": "\n🔄 So sánh file trong bundle với dự án hiện tại..." },
-  "info_apply_no_changes": { "en": "\n✅ No files have changed. The project is up to date.", "vi": "\n✅ Không có file nào thay đổi. Dự án đã được cập nhật." },
-  "info_apply_applying": { "en": "\n🚀 Starting to apply changes...", "vi": "\n🚀 Bắt đầu áp dụng thay đổi..." },
   "info_apply_cancelled": { "en": "\n👍 Cancelled. No changes were applied.", "vi": "\n👍 Đã hủy. Không có thay đổi nào được áp dụng." },
   "info_apply_complete": { "en": "\n🎉 Done! Applied changes to {count} file(s).", "vi": "\n🎉 Hoàn thành! Đã áp dụng thay đổi cho {count} file." },
-
   "info_git_found_staged": { "en": "🔍 Found {count} file(s) in the staging area.", "vi": "🔍 Tìm thấy {count} file trong staging area." },
   "info_git_found_since": { "en": "🔍 Found {count} changed file(s) compared to branch '{branch}'.", "vi": "🔍 Tìm thấy {count} file đã thay đổi so với nhánh '{branch}'." },
   "info_no_git_files": { "en": "No relevant files from Git to process. Exiting.", "vi": "Không có file nào từ Git để xử lý. Kết thúc." },
+  "info_no_files_after_filter": { "en": "No files matched after filtering. Exiting.", "vi": "Không có file nào phù hợp sau khi lọc. Kết thúc." },
+  "info_watch_start": { "en": "👀 Watching for changes...", "vi": "👀 Bắt đầu theo dõi thay đổi..." },
+  "info_watch_change_detected": { "en": "🔄 Change detected in {path}. Rebuilding bundle...", "vi": "🔄 Phát hiện thay đổi trong {path}. Đang tổng hợp lại..." },
+  "info_watch_success": { "en": "✅ Rebundled successfully!", "vi": "✅ Tổng hợp lại thành công!" },
+  "warn_watch_git_mode": { "en": "Watch mode is unavailable when processing files from Git.", "vi": "Chế độ Watch không khả dụng khi lấy file từ Git." },
+  "warn_watch_incompatible": { "en": "The --watch flag is not compatible with --staged or --since. Ignoring --watch.", "vi": "Chế độ --watch không tương thích với --staged hoặc --since. Bỏ qua --watch." },
+  "info_git_mode_staged": { "en": "Git Mode: Processing files in the Staging Area...", "vi": "Chế độ Git: Đang xử lý các file trong Staging Area..." },
+  "info_git_mode_since": { "en": "Git Mode: Processing changed files since branch '{branch}'...", "vi": "Chế độ Git: Đang xử lý các file thay đổi kể từ nhánh '{branch}'..." },
+  "error_watch_rebundle_failed": { "en": "Error while rebuilding bundle: {error}", "vi": "Lỗi khi tổng hợp lại: {error}" },
+  "info_plugins_loaded": { "en": "🔌 Loaded {count} plugin(s).", "vi": "🔌 Đã tải {count} plugin." },
+  "info_plugin_executing": { "en": "Running plugin command {command}...", "vi": "Đang chạy plugin {command}..." },
+  "warn_plugin_register_failed": { "en": "❌ Failed to register plugin '{command}': {error}", "vi": "❌ Không thể đăng ký plugin '{command}': {error}" },
+  "warn_plugin_execute_failed": { "en": "❌ Plugin '{command}' exited with an error: {error}", "vi": "❌ Plugin '{command}' gặp lỗi: {error}" },
   "info_no_files_for_tool": { "en": "   No matching files found to process with '{tool}'.", "vi": "   Không tìm thấy file nào phù hợp để xử lý với '{tool}'." },
   "info_no_files_to_analyze": { "en": "   No files found to analyze.", "vi": "   Không tìm thấy file nào để phân tích." },
   "info_running_tool": { "en": "Running '{tool}' for {count} file(s)...", "vi": "Đang chạy '{tool}' cho {count} file..." },
   "info_tool_completed_ok": { "en": "✅ Done with '{tool}'. No issues reported.", "vi": "✅ Hoàn thành với '{tool}'. Không có vấn đề nào được báo cáo." },
-  
-  "info_stats_start": { "en": "📊 Stats Mode: Analyzing project at {path}", "vi": "📊 Chế độ Thống kê: Đang phân tích dự án tại {path}"},
   "info_found_files_for_stats": { "en": "   Found {count} files. Collecting metrics...", "vi": "   Tìm thấy {count} file. Bắt đầu thu thập số liệu..." },
   "info_stats_complete": { "en": "\n✅ Done! Statistics report has been written to: {path}", "vi": "\n✅ Hoàn thành! Báo cáo thống kê đã được ghi vào file: {path}"},
 
@@ -123,13 +144,20 @@
 
   "title_diff_preview": { "en": "CHANGES PREVIEW", "vi": "XEM TRƯỚC THAY ĐỔI" },
   "title_changes_in_file": { "en": "Changes in file: {path}", "vi": "Thay đổi trong file: {path}" },
-  "title_new_files": { "en": "New files to be created", "vi": "Các file mới sẽ được tạo" },
-
   "tag_modified": { "en": "modified", "vi": "thay đổi" },
   "tag_new": { "en": "new", "vi": "mới" },
   "tag_created": { "en": "Created", "vi": "Đã tạo" },
   "tag_updated": { "en": "Updated", "vi": "Đã cập nhật" },
   "tag_error": { "en": "Error", "vi": "Lỗi" },
+
+  "info_bundle_complete": { "en": "\n🎉 Done! Bundle written to {path}", "vi": "\n🎉 Hoàn thành! Bundle đã được ghi vào: {path}" },
+  "info_apply_start": { "en": "Applying bundle from: {path}", "vi": "Đang áp dụng bundle từ: {path}" },
+  "info_apply_comparing": { "en": "Comparing bundle against current project...", "vi": "Đang so sánh bundle với dự án hiện tại..." },
+  "info_apply_no_changes": { "en": "No differences detected. Nothing to apply.", "vi": "Không phát hiện khác biệt. Không có gì để áp dụng." },
+  "info_apply_applying": { "en": "Applying selected files...", "vi": "Đang áp dụng các file đã chọn..." },
+  "error_file_not_found": { "en": "File not found: {path}", "vi": "Không tìm thấy file: {path}" },
+  "error_read_bundle": { "en": "Failed to read bundle file: {error}", "vi": "Không thể đọc file bundle: {error}" },
+  "error_writing_file": { "en": "Cannot write file {path}: {error}", "vi": "Không thể ghi file {path}: {error}" },
 
   "stats_total_files": { "en": "Total files analyzed", "vi": "Tổng số file đã phân tích" },
   "stats_total_lines": { "en": "Total lines", "vi": "Tổng số dòng" },

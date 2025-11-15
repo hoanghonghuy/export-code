@@ -1,39 +1,26 @@
 import argparse
 from abc import ABC, abstractmethod
 
+
 class ExportCodePlugin(ABC):
-    """
-    Lớp cơ sở trừu tượng cho tất cả các plugin của export-code.
-    Mỗi plugin phải kế thừa từ lớp này và triển khai các phương thức được định nghĩa.
-    """
+    """Lớp cơ sở cho tất cả plugin của export-code."""
 
     @property
     @abstractmethod
     def command(self) -> str:
-        """
-        Trả về tên lệnh chính của plugin (ví dụ: '--stats').
-        Đây là cờ lệnh để kích hoạt plugin.
-        """
-        pass
+        """Tên cờ lệnh chính mà plugin sử dụng, ví dụ: ``--my-tool``."""
+        raise NotImplementedError
 
     @abstractmethod
     def register_command(self, parser: argparse.ArgumentParser):
-        """
-        Đăng ký các tham số dòng lệnh của plugin vào parser chính.
-        
-        Args:
-            parser: Đối tượng ArgumentParser để thêm tham số vào.
-        """
-        pass
+        """Thêm các tham số dòng lệnh của plugin vào ``parser``."""
+        raise NotImplementedError
 
     @abstractmethod
     def execute(self, args: argparse.Namespace, t: 'Translator'):
-        """
-        Hàm chính để thực thi logic của plugin.
-        Hàm này sẽ được gọi khi lệnh của plugin được kích hoạt.
+        """Thực thi logic chính của plugin khi cờ tương ứng được kích hoạt."""
+        raise NotImplementedError
 
-        Args:
-            args: Namespace chứa tất cả các tham số đã được parse.
-            t: Đối tượng Translator để sử dụng hệ thống ngôn ngữ.
-        """
-        pass
+    def arg_dest(self) -> str:
+        """Trả về tên thuộc tính trong ``args`` tương ứng với cờ ``command``."""
+        return self.command.lstrip('-').replace('-', '_')

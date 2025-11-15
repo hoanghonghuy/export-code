@@ -50,19 +50,25 @@ class Translator:
         else:
             logging.warning(f"Mã ngôn ngữ '{lang_code}' không được hỗ trợ.")
 
-    def get(self, key, **kwargs):
-        """
-        Lấy chuỗi văn bản đã được dịch.
-        """
-        # Lấy template từ file json
-        template = self._strings.get(key, {}).get(self.lang)
-        
-        if template is None:
-            # Nếu không có bản dịch, thử lấy bản tiếng Anh
-            template = self._strings.get(key, {}).get('en', f"[{key}]") # Fallback
-            logging.debug(f"Thiếu bản dịch cho key '{key}' ở ngôn ngữ '{self.lang}', dùng bản tiếng Anh.")
+    def get(self, key, default=None, **kwargs):
+        """Lấy chuỗi văn bản đã được dịch, có hỗ trợ giá trị mặc định."""
+        entry = self._strings.get(key)
+        template = None
 
-        # Định dạng chuỗi nếu có tham số
+        if isinstance(entry, dict):
+            template = entry.get(self.lang) or entry.get('en')
+            if template is None:
+                logging.debug(f"Thiếu bản dịch cho key '{key}' ở ngôn ngữ '{self.lang}', dùng fallback.")
+        elif isinstance(entry, str):
+            template = entry
+
+        if template is None:
+            if default is not None:
+                template = default
+            else:
+                template = f"[{key}]"
+            logging.debug(f"Không tìm thấy key dịch '{key}'.")
+
         try:
             return template.format(**kwargs)
         except KeyError as e:

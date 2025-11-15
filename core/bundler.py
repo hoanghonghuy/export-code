@@ -3,6 +3,8 @@ import codecs
 import logging
 from tqdm import tqdm
 from .utils import find_project_files, get_gitignore_spec
+from .bundle_format import BUNDLE_HEADER_MARKER
+
 from .tree_generator import generate_tree
 
 def render_as_text(t, project_name, tree_structure, files_data):
@@ -71,7 +73,9 @@ def create_code_bundle(t, project_path, output_file, exclude_dirs, use_all_text_
         if output_format == 'md': final_content = render_as_markdown(t, project_name, tree_structure, files_data)
         else: final_content = render_as_text(t, project_name, tree_structure, files_data)
 
-        with codecs.open(output_path, 'w', 'utf-8') as outfile: outfile.write(final_content)
+        bundle_output = f"{BUNDLE_HEADER_MARKER}\n{final_content}"
+
+        with codecs.open(output_path, 'w', 'utf-8') as outfile: outfile.write(bundle_output)
         
         if include_tree: logging.info(t.get('info_bundle_complete', path=output_path))
 

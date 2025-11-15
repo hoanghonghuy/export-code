@@ -17,6 +17,7 @@ from core.todo_finder import export_todo_report
 from core.quality_checker import run_quality_tool
 from core.git_utils import get_staged_files, get_changed_files_since
 from core.translator import Translator
+from core.plugin_loader import load_plugins
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -50,7 +51,7 @@ class ChangeHandler(FileSystemEventHandler):
         base_output_file = os.path.splitext(output_file)[0]
         output_file_with_ext = f"{base_output_file}.{output_format}"
         self.output_filepath = os.path.abspath(os.path.join(project_path, output_file_with_ext))
-        logging.info("👀 Bắt đầu theo dõi thay đổi...")
+        logging.info(self.t.get("info_watch_start"))
 
     def on_modified(self, event):
         if event.is_directory: return
@@ -65,12 +66,12 @@ class ChangeHandler(FileSystemEventHandler):
         elif any(event.src_path.endswith(ext) for ext in self.extensions): should_rebundle = True
 
         if should_rebundle:
-            logging.info(f"🔄 Phát hiện thay đổi trong: {rel_path} -> Đang tổng hợp lại...")
+            logging.info(self.t.get("info_watch_change_detected", path=rel_path))
             try:
                 create_code_bundle(self.t, self.project_path, self.output_file, set(self.exclude_dirs), self.use_all_text_files, self.extensions, include_tree=False, output_format=self.output_format)
-                logging.info("✅ Tổng hợp lại thành công!")
+                logging.info(self.t.get("info_watch_success"))
             except Exception as e: 
-                logging.error(f"Lỗi khi tổng hợp lại: {e}", exc_info=True)
+                logging.error(self.t.get("error_watch_rebundle_failed", error=e), exc_info=True)
 
 def run_interactive_mode(t):
     logging.info(t.get("welcome_interactive"))
@@ -100,7 +101,7 @@ def run_interactive_mode(t):
         elif action == 'todo': export_todo_report(t, project_path, output_file or 'todo_report.txt', set(DEFAULT_EXCLUDE_DIRS))
         elif action == 'tree_only':
             project_root = os.path.abspath(project_path)
-            logging.info(f"🌳 Tạo cây thư mục cho: {project_root}")
+            logging.warning(t.get("warn_watch_git_mode"))
             gitignore_spec = get_gitignore_spec(project_root)
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
             tree_structure = generate_tree(project_root, set(DEFAULT_EXCLUDE_DIRS), gitignore_spec)
@@ -130,7 +131,7 @@ def run_interactive_mode(t):
     if source_mode != 'walk':
         ans = inquirer.prompt([
             inquirer.List('filter_mode', message=t.get("prompt_filter_git_list"),
-                          choices=[('Không, xử lý tất cả', 'none'), ('Có, lọc theo profile', 'profile'), ('Có, lọc theo đuôi file', 'ext')], default='none')
+                          choices=[(t.get("choice_filter_none"), 'none'), (t.get("choice_filter_profile"), 'profile'), (t.get("choice_filter_ext"), 'ext')], default='none')
         ], theme=GreenPassion())
         if not ans: logging.info(t.get("goodbye")); return
         filter_mode = ans.get('filter_mode')
@@ -139,19 +140,19 @@ def run_interactive_mode(t):
         selection_mode = filter_mode if filter_mode != 'walk' else 'profile'
         if source_mode == 'walk':
             ans = inquirer.prompt([
-                inquirer.List('selection_mode', message="Bạn muốn chọn file theo cách nào?",
-                              choices=[('Dùng profile', 'profile'), ('Tất cả file text', 'all'), ('Nhập đuôi file', 'ext')], default='profile'),
+                inquirer.List('selection_mode', message=t.get("prompt_selection_mode"),
+                              choices=[(t.get("choice_use_profile"), 'profile'), (t.get("choice_all_text"), 'all'), (t.get("choice_enter_extensions"), 'ext')], default='profile'),
             ], theme=GreenPassion())
             if not ans: logging.info(t.get("goodbye")); return
             selection_mode = ans.get('selection_mode')
         
         if selection_mode == 'all': use_all_files = True
         elif selection_mode == 'ext':
-            ans = inquirer.prompt([inquirer.Text('extensions', message="Nhập các đuôi file, cách nhau bởi dấu cách")])
+            ans = inquirer.prompt([inquirer.Text('extensions', message=t.get("prompt_enter_extensions"))])
             if not ans: logging.info(t.get("goodbye")); return
             extensions_to_use = ans.get('extensions', '').split()
         else: # profile
-            ans = inquirer.prompt([inquirer.Checkbox('selected_profiles', message="Chọn một hoặc nhiều profile", choices=list(profiles.keys()), default=['default'])])
+            ans = inquirer.prompt([inquirer.Checkbox('selected_profiles', message=t.get("prompt_select_profiles"), choices=list(profiles.keys()), default=['default'])])
             if not ans: logging.info(t.get("goodbye")); return
             profile_names_to_use = ans.get('selected_profiles', [])
             ext_set = set()
@@ -170,7 +171,7 @@ def run_interactive_mode(t):
             final_files_to_process = initial_file_list
     
     if not final_files_to_process:
-        logging.info("Không có file nào phù hợp sau khi lọc. Kết thúc."); return
+        logging.info(t.get("info_no_files_after_filter")); return
 
     if action == 'format_code' or action == 'lint':
         tool_key = 'formatter' if action == 'format_code' else 'linter'
@@ -211,7 +212,7 @@ def run_interactive_mode(t):
                 observer.stop(); logging.info("\n🛑 Đã dừng theo dõi.")
             observer.join()
         elif bundle_answers.get('watch'):
-            logging.warning("Chế độ Watch không khả dụng khi lấy file từ Git.")
+            logging.warning(t.get("warn_watch_git_mode"))
 
 def main():
     t = Translator()
@@ -225,6 +226,16 @@ def main():
     parser.add_argument("--review", action="store_true", help=t.get("help_review", default="Show a detailed diff view before applying changes."))
     parser.add_argument("--lang", choices=['en', 'vi'], help=t.get("help_lang", default="Set the display language."))
     parser.add_argument("--set-lang", choices=['en', 'vi'], help="Set and save the default language, then exit.")
+
+    plugin_instances = load_plugins()
+    registered_plugins = []
+    plugin_registration_errors = []
+    for plugin in plugin_instances:
+        try:
+            plugin.register_command(parser)
+            registered_plugins.append(plugin)
+        except Exception as exc:
+            plugin_registration_errors.append((plugin.command, exc))
     
     verbosity_group = parser.add_mutually_exclusive_group()
     verbosity_group.add_argument("-q", "--quiet", action="store_true", help=t.get("help_quiet", default="Quiet mode."))
@@ -262,16 +273,32 @@ def main():
     setup_logging(args.project_path, args.verbose, args.quiet)
     logging.debug(f"Command line arguments received: {args}")
 
+    if registered_plugins:
+        logging.info(t.get("info_plugins_loaded", count=len(registered_plugins)))
+    for command, exc in plugin_registration_errors:
+        logging.warning(t.get("warn_plugin_register_failed", command=command, error=exc))
+
     if len(sys.argv) == 1 and not (args.verbose or args.quiet):
         run_interactive_mode(t); return
 
     profiles = load_profiles(args.project_path)
+
+    for plugin in registered_plugins:
+        dest = plugin.arg_dest()
+        plugin_flag_value = getattr(args, dest, None)
+        if plugin_flag_value:
+            logging.info(t.get("info_plugin_executing", command=plugin.command))
+            try:
+                plugin.execute(args, t)
+            except Exception as exc:
+                logging.error(t.get("warn_plugin_execute_failed", command=plugin.command, error=exc), exc_info=True)
+            return
     
     if any([args.apply, args.tree_only, args.scene_tree, args.api_map, args.stats, args.todo]):
         if args.apply: apply_changes(t, args.project_path, args.apply, show_diff=args.review)
         if args.tree_only:
             project_root = os.path.abspath(args.project_path)
-            logging.info(f"🌳 Creating directory tree for: {project_root}")
+            logging.info(t.get("info_git_mode_staged"))
             gitignore_spec = get_gitignore_spec(project_root)
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
             tree_structure = generate_tree(project_root, set(args.exclude), gitignore_spec)
@@ -285,10 +312,10 @@ def main():
     final_files_to_process, initial_file_list = [], None
     if args.staged or args.since:
         if args.staged:
-            logging.info("Git Mode: Processing files in Staging Area...")
+            logging.info(t.get("info_git_mode_staged"))
             initial_file_list = get_staged_files(t, args.project_path)
         elif args.since:
-            logging.info(f"Git Mode: Processing changed files since branch '{args.since}'...")
+            logging.info(t.get("info_git_mode_since", branch=args.since))
             initial_file_list = get_changed_files_since(t, args.project_path, args.since)
         if not initial_file_list:
             logging.info(t.get("info_no_git_files")); return
@@ -344,7 +371,7 @@ def main():
     
     if args.watch:
         if args.staged or args.since:
-            logging.warning("Chế độ --watch không tương thích với --staged hoặc --since. Bỏ qua --watch."); return
+            logging.warning(t.get("warn_watch_incompatible")); return
         
         extensions_to_watch, use_all_to_watch = [], False
         if args.all: use_all_to_watch = True
