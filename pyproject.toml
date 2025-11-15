@@ -28,3 +28,6 @@ dependencies = [
 
 [project.scripts]
 export-code = "main:main"
+
+[tool.setuptools]
+packages = ["core"]  # Hoặc ["core", "locales"]

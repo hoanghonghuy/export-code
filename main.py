@@ -20,7 +20,22 @@ from core.translator import Translator
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-DEFAULT_EXCLUDE_DIRS = ['.expo', '.git', '.vscode', 'bin', 'obj', 'dist', '__pycache__', '.godot']
+# --- CẬP NHẬT QUAN TRỌNG ---
+# Bổ sung các thư mục phổ biến để tăng tốc độ quét
+DEFAULT_EXCLUDE_DIRS = [
+    # General
+    '.git', '.vscode', 'dist', 'build',
+    # Node.js
+    'node_modules',
+    # Python
+    '__pycache__', 'venv', '.venv', 'env', '*.egg-info',
+    # .NET
+    'bin', 'obj',
+    # Mobile
+    '.expo',
+    # Godot
+    '.godot'
+]
 
 class ChangeHandler(FileSystemEventHandler):
     def __init__(self, t, project_path, output_file, extensions, exclude_dirs, use_all_text_files, output_format='txt'):
@@ -92,7 +107,9 @@ def run_interactive_mode(t):
             print("-" * 50); print(f"{os.path.basename(project_root)}/"); print(tree_structure); print("-" * 50)
         return
 
-    initial_file_list = None
+    initial_file_list, final_files_to_process = None, []
+    extensions_to_use, use_all_files, profile_names_to_use = [], False, []
+
     ans = inquirer.prompt([
         inquirer.List('source', message=t.get("prompt_file_source"),
                       choices=[(t.get("source_walk"), 'walk'), (t.get("source_staged"), 'staged'), (t.get("source_since"), 'since')], default='walk')
@@ -109,8 +126,6 @@ def run_interactive_mode(t):
     if initial_file_list is not None and not initial_file_list:
         logging.info(t.get("info_no_git_files")); return
 
-    final_files_to_process, extensions_to_use, use_all_files, profile_names_to_use = [], [], False, []
-    
     filter_mode = 'walk'
     if source_mode != 'walk':
         ans = inquirer.prompt([
@@ -256,7 +271,7 @@ def main():
         if args.apply: apply_changes(t, args.project_path, args.apply, show_diff=args.review)
         if args.tree_only:
             project_root = os.path.abspath(args.project_path)
-            logging.info(f"🌳 Tạo cây thư mục cho: {project_root}")
+            logging.info(f"🌳 Creating directory tree for: {project_root}")
             gitignore_spec = get_gitignore_spec(project_root)
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
             tree_structure = generate_tree(project_root, set(args.exclude), gitignore_spec)
