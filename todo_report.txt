@@ -1,0 +1,69 @@
+PROJECT TODO REPORT: export-code
+Total notes found: 53
+================================================================================
+
+--- FILE: README.md ---
+- [Line 24] *   Generate comprehensive project statistics (`--stats`), including line counts, file types, and TODOs.
+- [Line 25] *   Create a dedicated report of all `TODO`, `FIXME`, and `NOTE` comments with `--todo`.
+- [Line 91] # Create a report of all TODOs and FIXMEs
+- [Line 92] export-code --todo
+
+--- FILE: README.vi.md ---
+- [Line 24] *   Tạo báo cáo thống kê dự án toàn diện (`--stats`), bao gồm số dòng code, loại file và các ghi chú TODO.
+- [Line 25] *   Tạo một báo cáo riêng cho tất cả các comment `TODO`, `FIXME`, `NOTE` với lệnh `--todo`.
+- [Line 91] # Tạo báo cáo về tất cả các ghi chú TODO và FIXME
+- [Line 92] export-code --todo
+
+--- FILE: core/stats_generator.py ---
+- [Line 8] line_count, todo_count = 0, 0
+- [Line 13] if 'TODO' in line.upper(): todo_count += 1
+- [Line 16] return line_count, todo_count
+- [Line 31] file_stats, total_lines, total_todos, stats_by_ext = [], 0, 0, {}
+- [Line 33] line_count, todo_count = analyze_file(file_path)
+- [Line 36] total_todos += todo_count
+- [Line 52] outfile.write(f"- {t.get('stats_total_todos')}: {total_todos}\n\n")
+
+--- FILE: core/todo_finder.py ---
+- [Line 7] KEYWORDS = ['TODO', 'FIXME', 'HACK', 'XXX', 'NOTE']
+- [Line 9] def find_todos_in_file(file_path):
+- [Line 10] found_todos = []
+- [Line 17] found_todos.append({'line_num': i, 'content': line.strip()})
+- [Line 20] return found_todos
+- [Line 22] def export_todo_report(t, project_path, output_file, exclude_dirs):
+- [Line 24] logging.info(t.get('info_todo_start', path=project_root))
+- [Line 33] logging.info(t.get('info_found_files_for_todo', count=len(files_to_analyze)))
+- [Line 35] all_todos, total_todo_count = {}, 0
+- [Line 37] todos_in_file = find_todos_in_file(file_path)
+- [Line 38] if todos_in_file:
+- [Line 40] all_todos[relative_path] = todos_in_file
+- [Line 41] total_todo_count += len(todos_in_file)
+- [Line 45] outfile.write(f"{t.get('header_todo_title')}: {os.path.basename(project_root)}\n")
+- [Line 46] outfile.write(f"{t.get('todo_total_found')}: {total_todo_count}\n" + "=" * 80 + "\n\n")
+- [Line 47] if not all_todos:
+- [Line 48] outfile.write(f"🎉 {t.get('todo_none_found')}\n")
+- [Line 50] for file_path in sorted(all_todos.keys()):
+- [Line 52] for todo in all_todos[file_path]:
+- [Line 53] outfile.write(f"- [{t.get('todo_line_prefix')} {todo['line_num']}] {todo['content']}\n")
+- [Line 55] logging.info(t.get('info_todo_complete', path=output_path))
+
+--- FILE: locales/strings.json ---
+- [Line 62] "action_todo": { "en": "Create TODO report", "vi": "Tạo báo cáo TODO" },
+- [Line 103] "info_todo_start": { "en": "📝 TODO Report Mode: Scanning project at {path}", "vi": "📝 Chế độ Báo cáo TODO: Đang quét dự án tại {path}"},
+- [Line 104] "info_found_files_for_todo": { "en": "   Found {count} files. Collecting notes...", "vi": "   Tìm thấy {count} file. Bắt đầu thu thập ghi chú..."},
+- [Line 105] "info_todo_complete": { "en": "\n✅ Done! TODO report has been written to: {path}", "vi": "\n✅ Hoàn thành! Báo cáo TODO đã được ghi vào file: {path}"},
+- [Line 141] "header_todo_title": { "en": "PROJECT TODO REPORT", "vi": "BÁO CÁO TODO DỰ ÁN" },
+- [Line 164] "stats_total_todos": { "en": "Total 'TODO's found", "vi": "Số lượng 'TODO' tìm thấy" },
+- [Line 167] "todo_total_found": { "en": "Total notes found", "vi": "Tổng số ghi chú tìm thấy" },
+- [Line 168] "todo_none_found": { "en": "Great! No TODO notes found.", "vi": "Tuyệt vời! Không tìm thấy ghi chú TODO nào." },
+- [Line 169] "todo_line_prefix": { "en": "Line", "vi": "Dòng" },
+- [Line 190] "help_todo": { "en": "Scan and report TODO/FIXME comments.", "vi": "Quét và tạo báo cáo các ghi chú TODO." },
+
+--- FILE: main.py ---
+- [Line 16] from core.todo_finder import export_todo_report
+- [Line 88] (t.get("action_stats"), 'stats'), (t.get("action_todo"), 'todo'), (t.get("action_tree"), 'tree_only'), (t.get("action_exit"), 'exit')], default='bundle')
+- [Line 94] if action in ['stats', 'todo', 'tree_only']:
+- [Line 101] elif action == 'todo': export_todo_report(t, project_path, output_file or 'todo_report.txt', set(DEFAULT_EXCLUDE_DIRS))
+- [Line 250] mode_group.add_argument("--todo", action="store_true", help=t.get("help_todo", default="Scan and report TODO/FIXME comments."))
+- [Line 297] if any([args.apply, args.tree_only, args.scene_tree, args.api_map, args.stats, args.todo]):
+- [Line 309] if args.todo: export_todo_report(t, args.project_path, args.output or 'todo_report.txt', set(args.exclude))
+

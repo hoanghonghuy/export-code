@@ -33,7 +33,7 @@ test = [
 ]
 
 [project.scripts]
-export-code = "main:main"
+export-code = "core.__main__:main"
 
 [tool.setuptools]
 packages = ["core"]  # Hoặc ["core", "locales"]
