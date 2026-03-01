@@ -3,3 +3,7 @@
 pathspec
 tqdm
 inquirer
+watchdog
+colorama
+colorlog
+GitPython
