@@ -3,12 +3,29 @@ import sys
 import codecs
 import difflib
 import logging
-import inquirer
 
 from colorama import init, Fore, Style
-from inquirer.themes import GreenPassion
 
 from .bundle_format import iter_bundle_sections, strip_bundle_header
+
+
+class _InquirerStub:
+    class Checkbox:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    @staticmethod
+    def prompt(*args, **kwargs):
+        return None
+
+
+class _GreenPassionStub:
+    pass
+
+
+inquirer = _InquirerStub()
+GreenPassion = _GreenPassionStub
 
 init(autoreset=True)
 
@@ -47,6 +64,13 @@ def parse_bundle_file(t, bundle_path):
     return file_contents
 
 def apply_changes(t, project_root, bundle_path, show_diff=False):
+    global inquirer, GreenPassion
+    if inquirer.prompt == _InquirerStub.prompt:
+        import inquirer as real_inquirer
+        from inquirer.themes import GreenPassion as real_green_passion
+        inquirer = real_inquirer
+        GreenPassion = real_green_passion
+
     bundle_data = parse_bundle_file(t, bundle_path)
     if not bundle_data: return
 

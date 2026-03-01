@@ -3,8 +3,6 @@ import argparse
 import logging
 import sys
 import time
-import inquirer
-from inquirer.themes import GreenPassion
 
 from .logger_setup import setup_logging
 from .utils import load_profiles, find_project_files, get_gitignore_spec
@@ -29,6 +27,24 @@ DEFAULT_EXCLUDE_DIRS = [
     '.expo',
     '.godot'
 ]
+
+
+def _ascii_tree_fallback(text):
+    return (
+        text.replace('├── ', '|-- ')
+        .replace('└── ', '`-- ')
+        .replace('│   ', '|   ')
+    )
+
+
+def _print_tree_output(project_root, tree_structure):
+    lines = ["-" * 50, f"{os.path.basename(project_root)}/", tree_structure, "-" * 50]
+    try:
+        for line in lines:
+            print(line)
+    except UnicodeEncodeError:
+        for line in lines:
+            print(_ascii_tree_fallback(line))
 
 class ChangeHandler(FileSystemEventHandler):
     def __init__(self, t, project_path, output_file, extensions, exclude_dirs, use_all_text_files, output_format='txt'):
@@ -66,6 +82,9 @@ class ChangeHandler(FileSystemEventHandler):
                 logging.error(self.t.get("error_watch_rebundle_failed").format(error=e), exc_info=True)
 
 def run_interactive_mode(t):
+    import inquirer
+    from inquirer.themes import GreenPassion
+
     logging.info(t.get("welcome_interactive"))
     
     ans = inquirer.prompt([inquirer.Text('project_path', message=t.get("prompt_project_path"), default='.')], theme=GreenPassion())
@@ -97,7 +116,7 @@ def run_interactive_mode(t):
             gitignore_spec = get_gitignore_spec(project_root)
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
             tree_structure = generate_tree(project_root, set(DEFAULT_EXCLUDE_DIRS), gitignore_spec)
-            print("-" * 50); print(f"{os.path.basename(project_root)}/"); print(tree_structure); print("-" * 50)
+            _print_tree_output(project_root, tree_structure)
         return
 
     initial_file_list, final_files_to_process = None, []
@@ -294,7 +313,7 @@ def main():
             gitignore_spec = get_gitignore_spec(project_root)
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
             tree_structure = generate_tree(project_root, set(args.exclude), gitignore_spec)
-            print("-" * 50); print(f"{os.path.basename(project_root)}/"); print(tree_structure); print("-" * 50)
+            _print_tree_output(project_root, tree_structure)
         if args.scene_tree: export_godot_scene_trees(t, args.project_path, args.output or 'scene_tree.txt', set(args.exclude))
         if args.api_map: export_api_map(t, args.project_path, args.output or 'api_map.txt', set(args.exclude), profiles)
         if args.stats: export_project_stats(t, args.project_path, args.output or 'project_stats.txt', set(args.exclude))
