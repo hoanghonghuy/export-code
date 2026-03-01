@@ -46,6 +46,34 @@ all_code.txt
 scene_tree.txt
 api_map.txt
 project_stats.txt
+todo_report.txt
+
+# Local AI working artifacts
+.local/
+
+# Optional local PyInstaller spec
+export-code.spec
 
 # File log (nếu có)
 *.log
+
+# Test/cache artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Generated outputs (reports, bundles, smoke/perf artifacts)
+*_report.txt
+*_stats.txt
+*scene_tree*.txt
+*api_map*.txt
+*todo*.txt
+*bundle*.txt
+*bundle*.md
+stats*.txt
+todo*.txt
+smoke_*.txt
+summary.json

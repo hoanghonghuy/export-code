@@ -1,121 +1,142 @@
-Read this in: [**English**](./README.md)
+Read this in: [English](./README.md)
 
-# Bộ công cụ Export Code (`export-code`)
+# export-code
 
-Một bộ công cụ dòng lệnh (CLI) đa năng và mạnh mẽ dành cho lập trình viên, được viết bằng Python. `export-code` không chỉ dừng lại ở việc gom code đơn thuần, mà còn cung cấp một bộ công cụ để phân tích, quản lý, định dạng và chia sẻ dự án của bạn một cách dễ dàng. Đây là một trợ lý không thể thiếu cho quy trình làm việc hàng ngày, review code và tương tác với các Mô hình Ngôn ngữ Lớn (LLM).
+`export-code` là công cụ dòng lệnh Python để gom mã nguồn, tạo báo cáo dự án, áp dụng thay đổi từ bundle, và chạy các quy trình format hoặc lint trong một giao diện thống nhất.
 
----
-## Tính năng nổi bật
+## Tính năng
 
-#### Gom Code Nâng cao:
-*   Tổng hợp mã nguồn vào một file `.txt` duy nhất hoặc file `.md` có thể thu gọn/mở rộng để điều hướng dễ dàng.
-*   Tự động bỏ qua các file dựa trên quy tắc trong `.gitignore`.
-*   Lựa chọn file linh hoạt: theo profile đã cấu hình (`-p`), đuôi file tùy chỉnh (`-e`), hoặc tất cả các file dạng text (`-a`).
+- Gom file dự án thành đầu ra `.txt` hoặc `.md`.
+- Tôn trọng `.gitignore` và hỗ trợ chọn file theo profile, đuôi file hoặc toàn bộ file text.
+- Áp dụng thay đổi từ file bundle với chế độ xem lại trước khi ghi.
+- Tạo báo cáo phân tích: thống kê, TODO, API map, cây thư mục, và cây scene Godot.
+- Chạy lệnh format và lint theo cấu hình profile.
+- Hỗ trợ phạm vi theo Git (`--staged`, `--since <branch>`), watch mode và interactive mode.
+- Hỗ trợ song ngữ tiếng Anh và tiếng Việt (`--lang`, `--set-lang`).
 
-#### Áp dụng Code An toàn:
-*   Áp dụng các thay đổi từ một file bundle ngược trở lại vào dự án bằng lệnh `--apply`.
-*   Bao gồm chế độ `--review` hiển thị một bản "diff" có màu sắc về tất cả các thay đổi để bạn phê duyệt trước khi ghi đè bất kỳ file nào, ngăn ngừa mất mát dữ liệu không mong muốn.
+## Yêu cầu
 
-#### Bộ Công cụ Chất lượng Code:
-*   Tự động định dạng (format) toàn bộ mã nguồn của dự án theo các tiêu chuẩn công nghiệp như Black, Prettier, `dotnet format` với lệnh `--format-code`.
-*   Phân tích code để tìm các lỗi tiềm ẩn và vi phạm quy tắc style bằng các linter như Flake8 và ESLint với lệnh `--lint`.
+- Python `>= 3.7`
+- Git có sẵn trong `PATH`
 
-#### Phân tích Dự án Chuyên sâu:
-*   Tạo báo cáo thống kê dự án toàn diện (`--stats`), bao gồm số dòng code, loại file và các ghi chú TODO.
-*   Tạo một báo cáo riêng cho tất cả các comment `TODO`, `FIXME`, `NOTE` với lệnh `--todo`.
-*   Tạo một bản đồ API cấp cao cho các hàm và lớp (`--api-map`).
-*   Trực quan hóa cấu trúc thư mục (`--tree-only`) và cấu trúc scene chuyên dụng cho Godot (`--scene-tree`).
+Công cụ tùy chọn cho lệnh chất lượng code:
 
-#### Tích hợp Quy trình làm việc Thông minh:
-*   **Tích hợp Git:** Chỉ xử lý những file quan trọng. Dùng `--staged` để tác động lên các file đã được `git add`, hoặc `--since <branch>` để xử lý các file đã thay đổi so với một nhánh cụ thể.
-*   **Chế độ Watch:** Tự động gom lại code của dự án mỗi khi có file thay đổi với cờ `--watch`.
-*   **Chế độ Tương tác:** Chạy `export-code` không có tham số để khởi động một menu hướng dẫn từng bước thân thiện với người dùng.
+- Python: `black`, `flake8`
+- JavaScript/TypeScript: `prettier`, `eslint`
+- .NET: `dotnet format`
 
-#### Tùy biến cao & Thân thiện:
-*   **Cấu hình theo Dự án:** Tạo một file `.export-code.json` trong thư mục gốc của dự án để ghi đè cấu hình toàn cục.
-*   **Hỗ trợ Đa ngôn ngữ:** Chuyển đổi giữa tiếng Anh (`en`) và tiếng Việt (`vi`) một cách nhanh chóng.
-*   **Kiểm soát Output:** Dùng `-q` (im lặng) hoặc `-v` (chi tiết) để kiểm soát lượng thông tin hiển thị.
-*   **Logging Tập trung:** Các file log được lưu trữ gọn gàng trong thư mục home của bạn (`~/.export-code/logs/`), giữ cho thư mục dự án luôn sạch sẽ.
-
----
 ## Cài đặt
 
-#### **1. Yêu cầu**
-*   **Python 3.7+** và **Git** phải được cài đặt và có trong biến môi trường PATH của hệ thống.
-*   **(Tùy chọn)** Để sử dụng các tính năng chất lượng code, bạn phải cài đặt các công cụ tương ứng (ví dụ: `pip install black flake8`, `npm install -g prettier eslint`).
+### Khuyến nghị: Cài đặt editable (quy trình phát triển)
 
-#### **2. Cài đặt**
-1.  Clone repository này hoặc tải mã nguồn về một vị trí cố định (ví dụ: `D:\workspace\tools\export-code`).
-2.  Mở terminal tại thư mục đó.
-3.  Cài đặt công cụ ở chế độ "editable". Chế độ này sẽ làm cho lệnh `export-code` có thể sử dụng được ở mọi nơi và tự động cập nhật khi bạn thay đổi mã nguồn của tool.
-    ```bash
-    pip install -e .
-    ```
-4.  Bây giờ bạn có thể chạy lệnh `export-code` từ bất kỳ thư mục nào trên hệ thống.
+1. Clone repository này.
+2. Mở terminal tại thư mục gốc của repository.
+3. Tạo và kích hoạt virtual environment.
+4. Cài đặt ở chế độ editable:
 
----
-## Hướng dẫn sử dụng
+```bash
+pip install -e .
+```
 
-### Chế độ Tương tác (Khuyến nghị cho người dùng mới)
-Chỉ cần chạy lệnh mà không có bất kỳ tham số nào để khởi động menu hướng dẫn.
+Chế độ này giữ lệnh liên kết trực tiếp với mã nguồn cục bộ, nên thay đổi code sẽ có hiệu lực ngay.
+
+### Ví dụ kích hoạt virtual environment
+
+PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Command Prompt:
+
+```bat
+.\.venv\Scripts\activate.bat
+```
+
+Bash:
+
+```bash
+source .venv/bin/activate
+```
+
+Nếu `export-code` không được nhận diện, hãy kích hoạt virtual environment hoặc thêm thư mục `Scripts`/`bin` của môi trường đó vào `PATH`.
+
+## Bắt đầu nhanh
+
+Xem trợ giúp:
+
+```bash
+export-code --help
+```
+
+Chạy chế độ tương tác:
+
 ```bash
 export-code
 ```
 
-### Ví dụ về Gom Code (Bundling)
+Gom dự án hiện tại ra Markdown:
+
 ```bash
-# Gom code một dự án Python thành file Markdown có thể thu gọn
 export-code -p python --format md
-
-# Gom tất cả các file .ts và .tsx đã được `git add` vào một file text
-export-code --staged -e .ts .tsx -o staged_components.txt
-
-# Theo dõi một dự án React và tự động gom code khi có thay đổi
-export-code -p react --watch
 ```
 
-### Ví dụ về Chất lượng Code
-```bash
-# Format tất cả các file Python trong dự án
-export-code --format-code -p python
+Tạo báo cáo thống kê và TODO:
 
-# Lint tất cả các file JavaScript và TypeScript đã được `git add`
-export-code --staged --lint -p react
-```
-
-### Ví dụ về Phân tích
 ```bash
-# Tạo báo cáo thống kê cho dự án hiện tại
 export-code --stats
-
-# Tạo báo cáo về tất cả các ghi chú TODO và FIXME
 export-code --todo
 ```
 
-### Ví dụ về Chế độ Áp dụng
+Áp dụng bundle có xem lại:
+
 ```bash
-# Áp dụng thay đổi từ một file bundle một cách an toàn, xem lại từng thay đổi trước
-export-code --apply ../changes.txt --review
+export-code --apply ./changes.txt --review
 ```
 
-### Cài đặt Ngôn ngữ
-```bash
-# Chạy một lệnh bằng tiếng Việt
-export-code --lang vi --stats
+## Các lệnh thường dùng
 
-# Đặt và lưu tiếng Việt làm ngôn ngữ mặc định cho các lần chạy sau
-export-code --set-lang vi
-```
+Chọn file và phạm vi:
 
----
+- `-a, --all`: bao gồm toàn bộ file text.
+- `-p, --profile ...`: chọn theo profile.
+- `-e, --ext ...`: chọn theo đuôi file.
+- `--staged`: chỉ xử lý file đã staged trong Git.
+- `--since <branch>`: chỉ xử lý file thay đổi kể từ một nhánh.
+
+Phân tích và đầu ra:
+
+- `--stats`: tạo thống kê dự án.
+- `--todo`: báo cáo `TODO`/`FIXME`/`NOTE`.
+- `--api-map`: tạo bản đồ API/hàm.
+- `--tree-only`: in cây thư mục.
+- `--scene-tree`: xuất cây scene Godot.
+
+Chất lượng và biến đổi:
+
+- `--format-code`: chạy formatter theo cấu hình.
+- `--lint`: chạy linter theo cấu hình.
+- `--apply <bundle_file>`: áp dụng thay đổi từ bundle.
+- `--review`: xem diff trước khi ghi file.
+
+Hành vi và ngôn ngữ:
+
+- `--watch`: tự động chạy lại khi file thay đổi.
+- `-q, --quiet`: giảm output.
+- `-v, --verbose`: tăng output chi tiết.
+- `--lang {en,vi}`: đặt ngôn ngữ cho lần chạy hiện tại.
+- `--set-lang {en,vi}`: lưu ngôn ngữ mặc định.
+
 ## Cấu hình
 
-Công cụ sử dụng một hệ thống cấu hình linh hoạt.
+`export-code` hỗ trợ 2 cấp cấu hình:
 
-*   **Cấu hình Cục bộ (`.export-code.json`):** Tạo file này trong thư mục gốc của dự án để định nghĩa các profile và cài đặt chỉ dành riêng cho dự án đó. Đây là cách tiếp cận được khuyến nghị khi làm việc nhóm.
-*   **Cấu hình Toàn cục (`config.json`):** Nếu không tìm thấy file cấu hình cục bộ, công cụ sẽ sử dụng file `config.json` nằm trong thư mục cài đặt của nó.
+1. Cục bộ theo dự án: `.export-code.json` tại thư mục gốc (khuyến nghị cho team).
+2. Cấu hình toàn cục dự phòng: `config.json` trong thư mục cài đặt của tool.
 
-### Ví dụ Cấu trúc Config
+### Ví dụ cấu hình profile
+
 ```json
 {
   "profiles": {
@@ -130,19 +151,44 @@ Công cụ sử dụng một hệ thống cấu hình linh hoạt.
         "command": "flake8",
         "extensions": [".py"]
       }
-    },
-    "react": {
-      "description": "Dành cho dự án React.",
-      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".json"],
-      "formatter": {
-        "command": "prettier --write --log-level warn",
-        "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".json"]
-      },
-      "linter": {
-        "command": "eslint --fix",
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
-      }
     }
   }
 }
 ```
+
+## Phát triển
+
+Chạy test:
+
+```bash
+pytest -q
+```
+
+Chạy entrypoint module trực tiếp:
+
+```bash
+python -m core --help
+```
+
+Build file thực thi một file (Windows):
+
+```powershell
+.\install.ps1
+```
+
+## Khắc phục sự cố
+
+Không nhận diện được lệnh `export-code`:
+
+- Kích hoạt virtual environment đã dùng cho `pip install -e .`.
+- Kiểm tra entrypoint có tồn tại trong `.venv/Scripts` (Windows) hoặc `.venv/bin` (Unix).
+- Cài lại bằng `pip install -e .`.
+
+Lỗi khi format hoặc lint:
+
+- Cài các công cụ yêu cầu (`black`, `flake8`, `prettier`, `eslint`, `dotnet format`).
+- Kiểm tra lệnh formatter/linter trong file cấu hình profile.
+
+## Giấy phép
+
+MIT License.

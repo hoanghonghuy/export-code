@@ -1,121 +1,142 @@
-Read this in: [**Tiếng Việt**](./README.vi.md)
+Read this in: [Tiếng Việt](./README.vi.md)
 
-# Code Exporter Toolkit (`export-code`)
+# export-code
 
-A powerful and versatile command-line toolkit for developers, written in Python. `export-code` goes beyond simple code bundling, offering a suite of tools to analyze, manage, format, and share your projects with ease. It's an indispensable assistant for daily development workflows, code reviews, and interacting with Large Language Models (LLMs).
+`export-code` is a Python command-line tool for bundling source code, generating project reports, applying bundle changes, and running formatting or linting workflows from one interface.
 
----
-## Key Features
+## Features
 
-#### Advanced Code Bundling:
-*   Consolidate source code into a single `.txt` or a collapsible `.md` file for easy navigation.
-*   Intelligently ignores files based on `.gitignore` rules.
-*   Flexible file selection: by pre-configured profiles (`-p`), custom extensions (`-e`), or all text files (`-a`).
+- Bundle project files into `.txt` or `.md` output.
+- Respect `.gitignore` and support selection by profile, extension, or all text files.
+- Apply changes from a bundle file with optional review mode.
+- Generate project insights: stats, TODO report, API map, tree view, and Godot scene tree view.
+- Run formatting and linting commands defined in profiles.
+- Support Git-aware scopes (`--staged`, `--since <branch>`), watch mode, and interactive mode.
+- Support English and Vietnamese (`--lang`, `--set-lang`).
 
-#### Safe Code Application:
-*   Apply changes from a bundle file back into a project using `--apply`.
-*   Includes a `--review` mode that displays a colored "diff" view of all changes for your approval before writing any files, preventing accidental data loss.
+## Requirements
 
-#### Code Quality Suite:
-*   Automatically format your entire project's codebase using industry-standard tools like Black, Prettier, and `dotnet format` with the `--format-code` command.
-*   Analyze your code for potential errors and style violations using linters like Flake8 and ESLint with the `--lint` command.
+- Python `>= 3.7`
+- Git available in `PATH`
 
-#### In-depth Project Analysis:
-*   Generate comprehensive project statistics (`--stats`), including line counts, file types, and TODOs.
-*   Create a dedicated report of all `TODO`, `FIXME`, and `NOTE` comments with `--todo`.
-*   Generate a high-level API map of functions and classes (`--api-map`).
-*   Visualize directory structure (`--tree-only`) and specialized Godot scene trees (`--scene-tree`).
+Optional tools for quality commands:
 
-#### Smart Workflow Integration:
-*   **Git Integration:** Process only the files that matter. Use `--staged` to act on files you've added to git, or `--since <branch>` to handle only files changed since a specific branch.
-*   **Watch Mode:** Automatically re-bundle your project on file changes with `--watch`.
-*   **Interactive Mode:** Run `export-code` with no arguments for a user-friendly, step-by-step guided menu.
+- Python: `black`, `flake8`
+- JavaScript/TypeScript: `prettier`, `eslint`
+- .NET: `dotnet format`
 
-#### Highly Customizable & User-Friendly:
-*   **Project-Specific Configuration:** Create a `.export-code.json` file in your project root to override the global configuration.
-*   **Multi-Language Support:** Switch between English (`en`) and Vietnamese (`vi`) on the fly.
-*   **Verbosity Control:** Use `-q` (quiet) or `-v` (verbose) to control the amount of output.
-*   **Centralized Logging:** Logs are neatly stored in your home directory (`~/.export-code/logs/`), keeping your project folders clean.
-
----
 ## Installation
 
-#### **1. Prerequisites**
-*   **Python 3.7+** and **Git** must be installed and available in your system's PATH.
-*   **(Optional)** For code quality features, you must install the respective tools (e.g., `pip install black flake8`, `npm install -g prettier eslint`).
+### Recommended: Editable install (development workflow)
 
-#### **2. Installation**
-1.  Clone this repository or download the source code to a permanent location (e.g., `D:\workspace\tools\export-code`).
-2.  Open a terminal in that directory.
-3.  Install the tool in "editable" mode. This makes the `export-code` command available globally and automatically reflects any changes you make to the source code.
-    ```bash
-    pip install -e .
-    ```
-4.  You can now run the `export-code` command from any directory on your system.
+1. Clone this repository.
+2. Open a terminal at the repository root.
+3. Create and activate a virtual environment.
+4. Install in editable mode:
 
----
-## Usage Guide
+```bash
+pip install -e .
+```
 
-### Interactive Mode (Recommended for new users)
-Simply run the command without any arguments to launch a step-by-step menu.
+This installation mode keeps the command linked to your local source, so code changes are reflected immediately.
+
+### Virtual environment activation examples
+
+PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Command Prompt:
+
+```bat
+.\.venv\Scripts\activate.bat
+```
+
+Bash:
+
+```bash
+source .venv/bin/activate
+```
+
+If `export-code` is not recognized, activate the virtual environment or add its `Scripts`/`bin` folder to `PATH`.
+
+## Quick Start
+
+Show help:
+
+```bash
+export-code --help
+```
+
+Run interactive mode:
+
 ```bash
 export-code
 ```
 
-### Bundling Examples
+Bundle current project as Markdown:
+
 ```bash
-# Bundle a Python project into a collapsible Markdown file
 export-code -p python --format md
-
-# Bundle all staged .ts and .tsx files into a text file
-export-code --staged -e .ts .tsx -o staged_components.txt
-
-# Watch a React project and automatically re-bundle on changes
-export-code -p react --watch
 ```
 
-### Code Quality Examples
-```bash
-# Format all Python files in the project
-export-code --format-code -p python
+Generate statistics and TODO report:
 
-# Lint all JavaScript and TypeScript files that have been staged for commit
-export-code --staged --lint -p react
-```
-
-### Analysis Examples
 ```bash
-# Generate a statistics report for the current project
 export-code --stats
-
-# Create a report of all TODOs and FIXMEs
 export-code --todo
 ```
 
-### Apply Mode Example
+Apply a bundle with review:
+
 ```bash
-# Safely apply changes from a bundle, reviewing each change first
-export-code --apply ../changes.txt --review
+export-code --apply ./changes.txt --review
 ```
 
-### Language Settings
-```bash
-# Run a command in Vietnamese
-export-code --lang vi --stats
+## Common Commands
 
-# Set and save Vietnamese as the default language for future use
-export-code --set-lang vi
-```
+Selection and scope:
 
----
+- `-a, --all`: include all text files.
+- `-p, --profile ...`: select by profile.
+- `-e, --ext ...`: select by extension.
+- `--staged`: process staged Git files only.
+- `--since <branch>`: process files changed since a branch.
+
+Analysis and output:
+
+- `--stats`: generate project statistics.
+- `--todo`: report `TODO`/`FIXME`/`NOTE`.
+- `--api-map`: generate API/function map.
+- `--tree-only`: print directory tree.
+- `--scene-tree`: export Godot scene tree.
+
+Quality and transformation:
+
+- `--format-code`: run configured formatter commands.
+- `--lint`: run configured linter commands.
+- `--apply <bundle_file>`: apply changes from bundle.
+- `--review`: show diff review before writing files.
+
+Behavior and language:
+
+- `--watch`: auto re-run on file changes.
+- `-q, --quiet`: reduce output.
+- `-v, --verbose`: increase output.
+- `--lang {en,vi}`: set display language for current command.
+- `--set-lang {en,vi}`: persist default language.
+
 ## Configuration
 
-The tool uses a flexible configuration system.
+`export-code` supports two configuration levels:
 
-*   **Project-Specific Config (`.export-code.json`):** Create this file in your project's root directory to define profiles and settings specific to that project. This is the recommended approach for team collaboration.
-*   **Global Config (`config.json`):** If no local config is found, the tool falls back to the `config.json` file located in its installation directory.
+1. Project local: `.export-code.json` at project root (preferred for team usage).
+2. Global fallback: `config.json` in the tool installation directory.
 
-### Example Config Structure
+### Example profile configuration
+
 ```json
 {
   "profiles": {
@@ -130,19 +151,44 @@ The tool uses a flexible configuration system.
         "command": "flake8",
         "extensions": [".py"]
       }
-    },
-    "react": {
-      "description": "For React projects.",
-      "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".json"],
-      "formatter": {
-        "command": "prettier --write --log-level warn",
-        "extensions": [".js", ".jsx", ".ts", ".tsx", ".css", ".json"]
-      },
-      "linter": {
-        "command": "eslint --fix",
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
-      }
     }
   }
 }
 ```
+
+## Development
+
+Run tests:
+
+```bash
+pytest -q
+```
+
+Run module entry directly:
+
+```bash
+python -m core --help
+```
+
+Build one-file executable (Windows):
+
+```powershell
+.\install.ps1
+```
+
+## Troubleshooting
+
+`export-code` command is not found:
+
+- Activate the virtual environment used during `pip install -e .`.
+- Verify the entrypoint exists in `.venv/Scripts` (Windows) or `.venv/bin` (Unix).
+- Reinstall with `pip install -e .`.
+
+Formatting or linting command fails:
+
+- Install required external tools (`black`, `flake8`, `prettier`, `eslint`, `dotnet format`).
+- Verify profile command definitions in your configuration file.
+
+## License
+
+MIT License.
