@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "export-code"
 version = "1.0.0"
-
+license = { text = "MIT" }
 authors = [
   { name="Hoang Hong Huy", email="your.email@example.com" },
 ]
@@ -14,7 +14,6 @@ readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -33,7 +32,7 @@ test = [
 ]
 
 [project.scripts]
-export-code = "core.__main__:main"
+export-code = "main:main"
 
-[tool.setuptools]
-packages = ["core"]  # Hoặc ["core", "locales"]
+[tool.setuptools.packages.find]
+where = ["core"]
