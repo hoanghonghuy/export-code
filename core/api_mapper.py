@@ -62,19 +62,23 @@ def export_api_map(t, project_path, output_file, exclude_dirs, profiles):
         outfile.write(f"{t.get('header_api_map_title')}: {os.path.basename(project_root)}\n")
         outfile.write("=" * 80 + "\n\n")
 
-        for file_path in tqdm(sorted(files_to_process), desc=t.get('progress_bar_analyzing'), unit=" file", ncols=100):
-            relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
-            signatures = []
-            try:
-                with codecs.open(file_path, 'r', 'utf-8') as infile: content = infile.read()
-                if file_path.endswith('.gd'): signatures = parse_gdscript(content)
-                elif file_path.endswith(('.js', '.jsx', '.ts', '.tsx')): signatures = parse_javascript(content)
-                
-                if signatures:
-                    outfile.write(f"[FILE] {relative_path}\n")
-                    for sig in signatures: outfile.write(f"{sig}\n")
-                    outfile.write("\n")
-            except Exception as e:
-                logging.error(t.get('error_cannot_process_file', path=relative_path, error=e))
+        try:
+            for file_path in tqdm(sorted(files_to_process), desc=t.get('progress_bar_analyzing'), unit=" file", ncols=100):
+                relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
+                signatures = []
+                try:
+                    with codecs.open(file_path, 'r', 'utf-8') as infile: content = infile.read()
+                    if file_path.endswith('.gd'): signatures = parse_gdscript(content)
+                    elif file_path.endswith(('.js', '.jsx', '.ts', '.tsx')): signatures = parse_javascript(content)
+                    
+                    if signatures:
+                        outfile.write(f"[FILE] {relative_path}\n")
+                        for sig in signatures: outfile.write(f"{sig}\n")
+                        outfile.write("\n")
+                except Exception as e:
+                    logging.error(t.get('error_cannot_process_file', path=relative_path, error=e))
+        except KeyboardInterrupt:
+            logging.info("\n🛑 Người dùng đã hủy quá trình xử lý.")
+            return
 
     logging.info(t.get('info_api_map_complete', path=output_path))

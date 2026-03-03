@@ -29,17 +29,21 @@ def export_project_stats(t, project_path, output_file, exclude_dirs):
     logging.info(t.get('info_found_files_for_stats', count=len(files_to_analyze)))
 
     file_stats, total_lines, total_todos, stats_by_ext = [], 0, 0, {}
-    for file_path in tqdm(sorted(files_to_analyze), desc=t.get('progress_bar_analyzing'), unit=" file", ncols=100):
-        line_count, todo_count = analyze_file(file_path)
-        if line_count > 0:
-            total_lines += line_count
-            total_todos += todo_count
-            relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
-            file_stats.append({'path': relative_path, 'lines': line_count})
-            ext = os.path.splitext(file_path)[1] or "(no extension)"
-            if ext not in stats_by_ext: stats_by_ext[ext] = {'count': 0, 'lines': 0}
-            stats_by_ext[ext]['count'] += 1
-            stats_by_ext[ext]['lines'] += line_count
+    try:
+        for file_path in tqdm(sorted(files_to_analyze), desc=t.get('progress_bar_analyzing'), unit=" file", ncols=100):
+            line_count, todo_count = analyze_file(file_path)
+            if line_count > 0:
+                total_lines += line_count
+                total_todos += todo_count
+                relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
+                file_stats.append({'path': relative_path, 'lines': line_count})
+                ext = os.path.splitext(file_path)[1] or "(no extension)"
+                if ext not in stats_by_ext: stats_by_ext[ext] = {'count': 0, 'lines': 0}
+                stats_by_ext[ext]['count'] += 1
+                stats_by_ext[ext]['lines'] += line_count
+    except KeyboardInterrupt:
+        logging.info("\n🛑 Người dùng đã hủy quá trình xử lý.")
+        return
 
     file_stats.sort(key=lambda x: x['lines'], reverse=True)
 

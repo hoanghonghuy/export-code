@@ -32,7 +32,7 @@ test = [
 ]
 
 [project.scripts]
-export-code = "core.__main__:main"
+export-code = "core.launcher:cli"
 
-[tool.setuptools.packages.find]
-where = ["core"]
+[tool.setuptools]
+packages = ["core"]

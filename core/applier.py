@@ -82,7 +82,15 @@ def apply_changes(t, project_root, bundle_path, show_diff=False):
     for relative_path, new_content in bundle_data.items():
         if os.path.basename(relative_path) == bundle_filename: continue
             
-        project_file_path = os.path.join(project_root, relative_path)
+        # Chuẩn hóa và xác thực đường dẫn để ngăn Path Traversal
+        normalized_relative_path = os.path.normpath(relative_path)
+        # Chuyển đổi tất cả dấu phân cách đường dẫn thành dấu / để kiểm tra
+        normalized_for_check = normalized_relative_path.replace('\\', '/')
+        if normalized_for_check.startswith('../') or '/..' in normalized_for_check:
+            logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
+            continue
+            
+        project_file_path = os.path.join(project_root, normalized_relative_path)
         
         if os.path.exists(project_file_path):
             try:
@@ -134,15 +142,35 @@ def apply_changes(t, project_root, bundle_path, show_diff=False):
     for choice in answers['files_to_apply']:
         is_new = f"({t.get('tag_new')})" in choice
         relative_path = choice.replace(f" ({t.get('tag_modified')})", "").replace(f" ({t.get('tag_new')})", "")
+        
+        # Chuẩn hóa và xác thực đường dẫn để ngăn Path Traversal
+        normalized_relative_path = os.path.normpath(relative_path)
+        # Chuyển đổi tất cả dấu phân cách đường dẫn thành dấu / để kiểm tra
+        normalized_for_check = normalized_relative_path.replace('\\', '/')
+        if normalized_for_check.startswith('../') or '/..' in normalized_for_check:
+            logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
+            continue
+            
         try:
-            project_file_path = os.path.join(project_root, relative_path)
+            project_file_path = os.path.join(project_root, normalized_relative_path)
             new_content = bundle_data[relative_path]
-            os.makedirs(os.path.dirname(project_file_path), exist_ok=True)
+            
+            # Kiểm tra quyền ghi trước khi ghi file
+            output_dir = os.path.dirname(project_file_path)
+            if output_dir and not os.access(output_dir, os.W_OK):
+                logging.error(f"   ❌ {t.get('error_no_write_permission', path=output_dir)}")
+                continue
+
+            os.makedirs(output_dir, exist_ok=True)
             with open(project_file_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             status = t.get('tag_created') if is_new else t.get('tag_updated')
             logging.info(f"   ✅ {status}: {relative_path}")
             applied_count += 1
+        except PermissionError:
+            logging.error(f"   ❌ {t.get('error_no_write_permission', path=project_file_path)}", exc_info=True)
+        except OSError as e:
+            logging.error(f"   ❌ {t.get('error_io_error', path=project_file_path, error=str(e))}", exc_info=True)
         except Exception as e:
             logging.error(f"   ❌ {t.get('error_writing_file', path=relative_path, error=e)}", exc_info=True)
             

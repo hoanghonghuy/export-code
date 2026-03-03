@@ -33,12 +33,16 @@ def export_todo_report(t, project_path, output_file, exclude_dirs):
     logging.info(t.get('info_found_files_for_todo', count=len(files_to_analyze)))
 
     all_todos, total_todo_count = {}, 0
-    for file_path in tqdm(sorted(files_to_analyze), desc=t.get('progress_bar_scanning'), unit=" file", ncols=100):
-        todos_in_file = find_todos_in_file(file_path)
-        if todos_in_file:
-            relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
-            all_todos[relative_path] = todos_in_file
-            total_todo_count += len(todos_in_file)
+    try:
+        for file_path in tqdm(sorted(files_to_analyze), desc=t.get('progress_bar_scanning'), unit=" file", ncols=100):
+            todos_in_file = find_todos_in_file(file_path)
+            if todos_in_file:
+                relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
+                all_todos[relative_path] = todos_in_file
+                total_todo_count += len(todos_in_file)
+    except KeyboardInterrupt:
+        logging.info("\n🛑 Người dùng đã hủy quá trình xử lý.")
+        return
 
     try:
         with codecs.open(output_path, 'w', 'utf-8') as outfile:

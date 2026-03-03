@@ -58,14 +58,18 @@ def create_code_bundle(t, project_path, output_file, exclude_dirs, use_all_text_
         if include_tree: logging.info(t.get('info_found_files_count', count=len(files_to_process)))
 
         files_data = []
-        iterable = tqdm(sorted(files_to_process), desc=t.get('progress_bar_processing'), unit=" file", ncols=100, disable=logging.getLogger().getEffectiveLevel() > logging.INFO)
-        for file_path in iterable:
-            relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
-            try:
-                with codecs.open(file_path, 'r', 'utf-8') as infile: content = infile.read()
-                files_data.append({'path': relative_path, 'content': content})
-            except Exception as e:
-                logging.error(t.get('error_cannot_read_file', path=relative_path, error=e))
+        try:
+            iterable = tqdm(sorted(files_to_process), desc=t.get('progress_bar_processing'), unit=" file", ncols=100, disable=logging.getLogger().getEffectiveLevel() > logging.INFO)
+            for file_path in iterable:
+                relative_path = os.path.relpath(file_path, project_root).replace(os.sep, '/')
+                try:
+                    with codecs.open(file_path, 'r', 'utf-8') as infile: content = infile.read()
+                    files_data.append({'path': relative_path, 'content': content})
+                except Exception as e:
+                    logging.error(t.get('error_cannot_read_file', path=relative_path, error=e))
+        except KeyboardInterrupt:
+            logging.info("\n🛑 Người dùng đã hủy quá trình xử lý.")
+            return
 
         tree_structure = generate_tree(project_root, exclude_dirs, gitignore_spec) if include_tree else None
         
@@ -75,9 +79,19 @@ def create_code_bundle(t, project_path, output_file, exclude_dirs, use_all_text_
 
         bundle_output = f"{BUNDLE_HEADER_MARKER}\n{final_content}"
 
+        # Kiểm tra quyền ghi trước khi ghi file
+        output_dir = os.path.dirname(output_path)
+        if output_dir and not os.access(output_dir, os.W_OK):
+            logging.error(t.get('error_no_write_permission', path=output_dir))
+            return
+
         with codecs.open(output_path, 'w', 'utf-8') as outfile: outfile.write(bundle_output)
         
         if include_tree: logging.info(t.get('info_bundle_complete', path=output_path))
 
+    except PermissionError:
+        logging.error(t.get('error_no_write_permission', path=output_path))
+    except OSError as e:
+        logging.error(t.get('error_io_error', path=output_path, error=str(e)))
     except Exception as e:
         logging.error(t.get('error_fatal', error=e), exc_info=True)

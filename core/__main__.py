@@ -224,6 +224,55 @@ def run_interactive_mode(t):
             observer.join()
         elif bundle_answers.get('watch'):
             logging.warning(t.get("warn_watch_git_mode"))
+            return
+
+def _get_files_to_process(t, args, profiles):
+    """
+    Hàm helper để lấy danh sách file cần xử lý, dùng chung cho cả chế độ CLI và Interactive
+    """
+    final_files_to_process, initial_file_list = [], None
+    if args.staged or args.since:
+        if args.staged:
+            logging.info(t.get("info_git_mode_staged"))
+            initial_file_list = get_staged_files(t, args.project_path)
+        elif args.since:
+            logging.info(t.get("info_git_mode_since").format(branch=args.since))
+            initial_file_list = get_changed_files_since(t, args.project_path, args.since)
+        if not initial_file_list:
+            logging.info(t.get("info_no_git_files")); return []
+    else:
+        extensions_to_use_walk, use_all_files_walk, profile_names_to_use_walk = [], False, args.profile or []
+        if args.all: use_all_files_walk = True
+        elif args.ext: extensions_to_use_walk = args.ext
+        elif args.profile:
+            ext_set = set()
+            for name in profile_names_to_use_walk: ext_set.update(profiles.get(name, {}).get('extensions', []))
+            extensions_to_use_walk = list(ext_set)
+        else: extensions_to_use_walk = profiles.get('default', {}).get('extensions', [])
+        initial_file_list = find_project_files(args.project_path, set(args.exclude), use_all_files_walk, extensions_to_use_walk)
+
+    extensions_to_filter = []
+    profile_names_to_use = args.profile or []
+    if args.ext: extensions_to_filter = args.ext
+    elif args.profile:
+        ext_set = set()
+        for name in profile_names_to_use: ext_set.update(profiles.get(name, {}).get('extensions', []))
+        extensions_to_filter = list(ext_set)
+    
+    if (args.staged or args.since) and (extensions_to_filter or args.all):
+        if args.all:
+            from .utils import is_text_file
+            final_files_to_process = [f for f in initial_file_list if is_text_file(f)]
+        else:
+            final_files_to_process = [f for f in initial_file_list if f.endswith(tuple(extensions_to_filter))]
+    else:
+        final_files_to_process = initial_file_list
+    
+    if not final_files_to_process:
+        logging.info("Không có file nào phù hợp sau khi lọc. Kết thúc."); return []
+    
+    return final_files_to_process
+
 
 def main():
     t = Translator()
@@ -320,46 +369,9 @@ def main():
         if args.todo: export_todo_report(t, args.project_path, args.output or 'todo_report.txt', set(args.exclude))
         return
 
-    final_files_to_process, initial_file_list = [], None
-    if args.staged or args.since:
-        if args.staged:
-            logging.info(t.get("info_git_mode_staged"))
-            initial_file_list = get_staged_files(t, args.project_path)
-        elif args.since:
-            logging.info(t.get("info_git_mode_since").format(branch=args.since))
-            initial_file_list = get_changed_files_since(t, args.project_path, args.since)
-        if not initial_file_list:
-            logging.info(t.get("info_no_git_files")); return
-    else:
-        extensions_to_use_walk, use_all_files_walk, profile_names_to_use_walk = [], False, args.profile or []
-        if args.all: use_all_files_walk = True
-        elif args.ext: extensions_to_use_walk = args.ext
-        elif args.profile:
-            ext_set = set()
-            for name in profile_names_to_use_walk: ext_set.update(profiles.get(name, {}).get('extensions', []))
-            extensions_to_use_walk = list(ext_set)
-        else: extensions_to_use_walk = profiles.get('default', {}).get('extensions', [])
-        initial_file_list = find_project_files(args.project_path, set(args.exclude), use_all_files_walk, extensions_to_use_walk)
-
-    extensions_to_filter = []
-    profile_names_to_use = args.profile or []
-    if args.ext: extensions_to_filter = args.ext
-    elif args.profile:
-        ext_set = set()
-        for name in profile_names_to_use: ext_set.update(profiles.get(name, {}).get('extensions', []))
-        extensions_to_filter = list(ext_set)
-    
-    if (args.staged or args.since) and (extensions_to_filter or args.all):
-        if args.all:
-            from .utils import is_text_file
-            final_files_to_process = [f for f in initial_file_list if is_text_file(f)]
-        else:
-            final_files_to_process = [f for f in initial_file_list if f.endswith(tuple(extensions_to_filter))]
-    else:
-        final_files_to_process = initial_file_list
-
+    final_files_to_process = _get_files_to_process(t, args, profiles)
     if not final_files_to_process:
-        logging.info("Không có file nào phù hợp sau khi lọc. Kết thúc."); return
+        return
     
     if args.format_code or args.lint:
         tool_key = 'formatter' if args.format_code else 'linter'

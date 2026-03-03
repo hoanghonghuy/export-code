@@ -17,9 +17,9 @@ def run_quality_tool(t, tool_name, command, files_to_process):
     logging.info(f"\n▶️  {t.get('info_running_tool', tool=tool_command_name, count=len(files_to_process))}")
     
     full_command = command.split() + files_to_process
-    
+     
     try:
-        result = subprocess.run(full_command, capture_output=True, text=True, shell=False, check=False)
+        result = subprocess.run(full_command, capture_output=True, text=True, shell=False, check=False, timeout=300)  # 5 minutes timeout
 
         if result.stdout:
             logging.info(result.stdout.strip())
@@ -27,12 +27,14 @@ def run_quality_tool(t, tool_name, command, files_to_process):
         if result.stderr:
             logging.error(f"--- {t.get('header_tool_error')} ---")
             logging.error(result.stderr.strip())
-
+ 
         if result.returncode != 0:
             logging.warning(f"⚠️  {t.get('warn_tool_completed_with_issues', tool=tool_command_name, code=result.returncode)}")
         else:
             logging.info(f"✅ {t.get('info_tool_completed_ok', tool=tool_command_name)}")
 
+    except subprocess.TimeoutExpired:
+        logging.error(f"⏰ {t.get('error_tool_timeout', tool=tool_command_name)}: Command exceeded timeout of 300 seconds.")
     except FileNotFoundError:
         logging.error(t.get('error_command_not_found', command=tool_command_name))
     except Exception as e:
