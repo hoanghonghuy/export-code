@@ -1,6 +1,8 @@
 import os
+import sys
 import json
 import logging
+import io
 from typing import Dict, List, Optional, Set, Any
 from pathlib import Path
 import pathspec
@@ -17,6 +19,17 @@ DEFAULT_EXCLUDE_DIRS = [
     '.expo',
     '.godot'
 ]
+
+def setup_console_encoding() -> None:
+    """
+    Thiết lập encoding cho console là UTF-8 trên Windows để tránh lỗi UnicodeEncodeError.
+    """
+    if sys.platform == 'win32':
+        # Đảm bảo stdout và stderr sử dụng UTF-8
+        if hasattr(sys.stdout, 'encoding') and sys.stdout.encoding.lower() != 'utf-8':
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        if hasattr(sys.stderr, 'encoding') and sys.stderr.encoding.lower() != 'utf-8':
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 def load_profiles(project_path: str = '.') -> Dict[str, Any]:
     """

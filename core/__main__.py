@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 from .logger_setup import setup_logging
-from .utils import load_profiles, find_project_files, get_gitignore_spec, get_extensions_from_profiles, DEFAULT_EXCLUDE_DIRS
+from .utils import load_profiles, find_project_files, get_gitignore_spec, get_extensions_from_profiles, DEFAULT_EXCLUDE_DIRS, setup_console_encoding
 from .tree_generator import generate_tree, export_godot_scene_trees
 from .bundler import create_code_bundle
 from .api_mapper import export_api_map
@@ -290,6 +290,7 @@ def validate_input_paths(t: Any, project_path: str, output_file: Optional[str] =
     return True
 
 def main():
+    setup_console_encoding()
     t = Translator()
     parser = argparse.ArgumentParser(description=t.get("app_description", default="A tool to bundle, analyze, and manage code projects."))
     

@@ -65,6 +65,8 @@ export-code.spec
 coverage.xml
 htmlcov/
 
+test_temp
+
 # Generated outputs (reports, bundles, smoke/perf artifacts)
 *_report.txt
 *_stats.txt

@@ -113,8 +113,8 @@ def apply_changes(t: Any, project_root: str, bundle_path: str, show_diff: bool =
             logging.warning(f"   ⚠️  Invalid path detected: {relative_path}. Skipping...")
             continue
         
-        if not str(project_file_path).startswith(str(project_root_path) + os.sep) and project_file_path != project_root_path:
-            logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
+        if project_root_path != project_file_path and project_root_path not in project_file_path.parents:
+            logging.warning(f"   [WARN] Bypass attempt detected for path: {relative_path}. Skipping...")
             continue
         
         if project_file_path.exists():
@@ -176,8 +176,8 @@ def apply_changes(t: Any, project_root: str, bundle_path: str, show_diff: bool =
             logging.warning(f"   ⚠️  Invalid path detected: {relative_path}. Skipping...")
             continue
         
-        if not str(project_file_path).startswith(str(project_root_path) + os.sep) and project_file_path != project_root_path:
-            logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
+        if project_root_path != project_file_path and project_root_path not in project_file_path.parents:
+            logging.warning(f"   [WARN] Bypass attempt detected for path: {relative_path}. Skipping...")
             continue
             
         try:
