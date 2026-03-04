@@ -3,6 +3,7 @@ import argparse
 import logging
 import sys
 import time
+from pathlib import Path
 
 from .logger_setup import setup_logging
 from .utils import load_profiles, find_project_files, get_gitignore_spec, get_extensions_from_profiles, DEFAULT_EXCLUDE_DIRS
@@ -30,7 +31,7 @@ def _ascii_tree_fallback(text):
 
 
 def _print_tree_output(project_root, tree_structure):
-    lines = ["-" * 50, f"{os.path.basename(project_root)}/", tree_structure, "-" * 50]
+    lines = ["-" * 50, f"{Path(project_root).name}/", tree_structure, "-" * 50]
     try:
         for line in lines:
             print(line)
@@ -48,16 +49,20 @@ class ChangeHandler(FileSystemEventHandler):
         self.use_all_text_files = use_all_text_files
         self.output_format = output_format
         
-        base_output_file = os.path.splitext(output_file)[0]
-        output_file_with_ext = f"{base_output_file}.{output_format}"
-        self.output_filepath = os.path.abspath(os.path.join(project_path, output_file_with_ext))
+        self.output_filepath = Path(output_file).with_suffix(f'.{output_format}').resolve()
         logging.info(self.t.get("info_watch_start"))
 
     def on_modified(self, event):
         if event.is_directory: return
-        if os.path.abspath(event.src_path) == self.output_filepath: return
-        rel_path = os.path.relpath(event.src_path, self.project_path)
-        if any(rel_path.startswith(excluded + os.sep) for excluded in self.exclude_dirs): return
+        src_path = Path(event.src_path).resolve()
+        if src_path == self.output_filepath: return
+        
+        try:
+            rel_path = src_path.relative_to(Path(self.project_path).resolve()).as_posix()
+        except ValueError:
+            return
+
+        if any(rel_path.startswith(excluded + '/') for excluded in self.exclude_dirs): return
 
         should_rebundle = False
         if self.use_all_text_files:
@@ -103,12 +108,12 @@ def run_interactive_mode(t):
         if action == 'stats': export_project_stats(t, project_path, output_file or 'project_stats.txt', set(DEFAULT_EXCLUDE_DIRS))
         elif action == 'todo': export_todo_report(t, project_path, output_file or 'todo_report.txt', set(DEFAULT_EXCLUDE_DIRS))
         elif action == 'tree_only':
-            project_root = os.path.abspath(project_path)
+            project_root = Path(project_path).resolve()
             logging.warning(t.get("warn_watch_git_mode"))
-            gitignore_spec = get_gitignore_spec(project_root)
+            gitignore_spec = get_gitignore_spec(str(project_root))
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
-            tree_structure = generate_tree(project_root, set(DEFAULT_EXCLUDE_DIRS), gitignore_spec)
-            _print_tree_output(project_root, tree_structure)
+            tree_structure = generate_tree(str(project_root), set(DEFAULT_EXCLUDE_DIRS), gitignore_spec)
+            _print_tree_output(str(project_root), tree_structure)
         return
 
     initial_file_list, final_files_to_process = None, []
@@ -260,6 +265,30 @@ def _get_files_to_process(t, args, profiles):
     return final_files_to_process
 
 
+def validate_input_paths(t: Any, project_path: str, output_file: Optional[str] = None) -> bool:
+    """
+    Kiểm tra tính hợp lệ của các đường dẫn đầu vào.
+    """
+    p_path = Path(project_path)
+    if not p_path.exists():
+        logging.error(t.get('error_file_not_found', path=project_path))
+        return False
+    if not p_path.is_dir():
+        logging.error(f"   ❌ {project_path} is not a directory.")
+        return False
+    
+    if output_file:
+        o_path = Path(output_file)
+        # Kiểm tra xem thư mục cha có quyền ghi không (đã có logic trong bundler nhưng check sớm ở đây cũng tốt)
+        parent = o_path.parent
+        while parent != parent.parent and not parent.exists():
+            parent = parent.parent
+        if parent.exists() and not os.access(str(parent), os.W_OK):
+            logging.error(t.get('error_no_write_permission', path=str(parent)))
+            return False
+            
+    return True
+
 def main():
     t = Translator()
     parser = argparse.ArgumentParser(description=t.get("app_description", default="A tool to bundle, analyze, and manage code projects."))
@@ -341,18 +370,24 @@ def main():
             return
     
     if any([args.apply, args.tree_only, args.scene_tree, args.api_map, args.stats, args.todo]):
+        if not validate_input_paths(t, args.project_path, args.output):
+            return
+
         if args.apply: apply_changes(t, args.project_path, args.apply, show_diff=args.review)
         if args.tree_only:
-            project_root = os.path.abspath(args.project_path)
+            project_root = Path(args.project_path).resolve()
             logging.info(t.get("info_git_mode_staged"))
-            gitignore_spec = get_gitignore_spec(project_root)
+            gitignore_spec = get_gitignore_spec(str(project_root))
             if gitignore_spec: logging.info(t.get("info_found_gitignore"))
-            tree_structure = generate_tree(project_root, set(args.exclude), gitignore_spec)
-            _print_tree_output(project_root, tree_structure)
+            tree_structure = generate_tree(str(project_root), set(args.exclude), gitignore_spec)
+            _print_tree_output(str(project_root), tree_structure)
         if args.scene_tree: export_godot_scene_trees(t, args.project_path, args.output or 'scene_tree.txt', set(args.exclude))
         if args.api_map: export_api_map(t, args.project_path, args.output or 'api_map.txt', set(args.exclude), profiles)
         if args.stats: export_project_stats(t, args.project_path, args.output or 'project_stats.txt', set(args.exclude))
         if args.todo: export_todo_report(t, args.project_path, args.output or 'todo_report.txt', set(args.exclude))
+        return
+
+    if not validate_input_paths(t, args.project_path, args.output):
         return
 
     final_files_to_process = _get_files_to_process(t, args, profiles)

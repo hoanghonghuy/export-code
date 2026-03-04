@@ -4,6 +4,7 @@ import codecs
 import difflib
 import logging
 from typing import Dict, List, Optional, Any
+from pathlib import Path
 
 from colorama import init, Fore, Style
 
@@ -55,14 +56,15 @@ def parse_bundle_file(t: Any, bundle_path: str) -> Optional[Dict[str, str]]:
     Returns:
         Dict ánh xạ từ đường dẫn file đến nội dung, hoặc None nếu có lỗi.
     """
-    if not os.path.exists(bundle_path):
-        logging.error(t.get('error_file_not_found', path=bundle_path))
+    bundle_path_obj = Path(bundle_path)
+    if not bundle_path_obj.exists():
+        logging.error(t.get('error_file_not_found', path=str(bundle_path_obj)))
         return None
 
-    logging.info(t.get('info_apply_start', path=bundle_path))
+    logging.info(t.get('info_apply_start', path=str(bundle_path_obj)))
     file_contents = {}
     try:
-        with open(bundle_path, 'r', encoding='utf-8') as f:
+        with bundle_path_obj.open('r', encoding='utf-8') as f:
             raw_content = f.read()
 
         normalized_content = strip_bundle_header(raw_content)
@@ -98,22 +100,26 @@ def apply_changes(t: Any, project_root: str, bundle_path: str, show_diff: bool =
     logging.info(t.get('info_apply_comparing'))
     
     modified_files, new_files = [], []
-    bundle_filename = os.path.basename(bundle_path)
+    bundle_filename = Path(bundle_path).name
+    project_root_path = Path(project_root).resolve()
 
     for relative_path, new_content in bundle_data.items():
-        if os.path.basename(relative_path) == bundle_filename: continue
+        if Path(relative_path).name == bundle_filename: continue
             
         # Chuẩn hóa và xác thực đường dẫn để ngăn Path Traversal
-        normalized_relative_path = os.path.normpath(relative_path)
-        project_file_path = os.path.abspath(os.path.join(project_root, normalized_relative_path))
+        try:
+            project_file_path = (project_root_path / relative_path).resolve()
+        except (ValueError, OSError):
+            logging.warning(f"   ⚠️  Invalid path detected: {relative_path}. Skipping...")
+            continue
         
-        if not project_file_path.startswith(os.path.abspath(project_root) + os.sep) and project_file_path != os.path.abspath(project_root):
+        if not str(project_file_path).startswith(str(project_root_path) + os.sep) and project_file_path != project_root_path:
             logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
             continue
         
-        if os.path.exists(project_file_path):
+        if project_file_path.exists():
             try:
-                with open(project_file_path, 'r', encoding='utf-8') as f:
+                with project_file_path.open('r', encoding='utf-8') as f:
                     current_content_lines = f.read().splitlines()
                 new_content_lines = new_content.splitlines()
 
@@ -157,16 +163,20 @@ def apply_changes(t: Any, project_root: str, bundle_path: str, show_diff: bool =
 
     logging.info(t.get('info_apply_applying'))
     applied_count = 0
+    write_permission_cache = {}
     
     for choice in answers['files_to_apply']:
         is_new = f"({t.get('tag_new')})" in choice
         relative_path = choice.replace(f" ({t.get('tag_modified')})", "").replace(f" ({t.get('tag_new')})", "")
         
         # Chuẩn hóa và xác thực đường dẫn để ngăn Path Traversal
-        normalized_relative_path = os.path.normpath(relative_path)
-        project_file_path = os.path.abspath(os.path.join(project_root, normalized_relative_path))
+        try:
+            project_file_path = (project_root_path / relative_path).resolve()
+        except (ValueError, OSError):
+            logging.warning(f"   ⚠️  Invalid path detected: {relative_path}. Skipping...")
+            continue
         
-        if not project_file_path.startswith(os.path.abspath(project_root) + os.sep) and project_file_path != os.path.abspath(project_root):
+        if not str(project_file_path).startswith(str(project_root_path) + os.sep) and project_file_path != project_root_path:
             logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
             continue
             
@@ -174,20 +184,22 @@ def apply_changes(t: Any, project_root: str, bundle_path: str, show_diff: bool =
             new_content = bundle_data[relative_path]
             
             # Kiểm tra quyền ghi trước khi ghi file
-            output_dir = os.path.dirname(project_file_path)
+            output_dir = project_file_path.parent
             
-            # Nếu thư mục chưa tồn tại, kiểm tra quyền ghi ở thư mục cha gần nhất hiện có
-            check_dir = output_dir
-            while check_dir and not os.path.exists(check_dir):
-                check_dir = os.path.dirname(check_dir)
+            # Triển khai cache quyền ghi
+            if str(output_dir) not in write_permission_cache:
+                check_dir = output_dir
+                while check_dir != check_dir.parent and not check_dir.exists():
+                    check_dir = check_dir.parent
+                
+                write_permission_cache[str(output_dir)] = os.access(str(check_dir), os.W_OK)
             
-            if check_dir and not os.access(check_dir, os.W_OK):
-                logging.error(f"   ❌ {t.get('error_no_write_permission', path=check_dir)}")
+            if not write_permission_cache[str(output_dir)]:
+                logging.error(f"   ❌ {t.get('error_no_write_permission', path=str(output_dir))}")
                 continue
 
-            if output_dir:
-                os.makedirs(output_dir, exist_ok=True)
-            with open(project_file_path, 'w', encoding='utf-8') as f:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            with project_file_path.open('w', encoding='utf-8') as f:
                 f.write(new_content)
             status = t.get('tag_created') if is_new else t.get('tag_updated')
             logging.info(f"   ✅ {status}: {relative_path}")

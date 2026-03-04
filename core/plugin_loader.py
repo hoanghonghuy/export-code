@@ -3,6 +3,7 @@ import importlib.util
 import inspect
 import logging
 from typing import List, Optional
+from pathlib import Path
 from .plugin_base import ExportCodePlugin
 
 def load_plugins(plugin_dir: Optional[str] = None) -> List[ExportCodePlugin]:
@@ -10,19 +11,21 @@ def load_plugins(plugin_dir: Optional[str] = None) -> List[ExportCodePlugin]:
     Quét một thư mục, tự động tải các plugin và trả về một danh sách các instance.
     """
     if not plugin_dir:
-        plugin_dir = os.path.join(os.path.expanduser("~"), '.export-code', 'plugins')
+        plugin_dir_path = Path.home() / '.export-code' / 'plugins'
+    else:
+        plugin_dir_path = Path(plugin_dir)
 
     plugins: List[ExportCodePlugin] = []
     
-    if not os.path.isdir(plugin_dir):
-        logging.debug(f"Thư mục plugin '{plugin_dir}' không tồn tại. Bỏ qua việc tải plugin ngoài.")
+    if not plugin_dir_path.is_dir():
+        logging.debug(f"Thư mục plugin '{plugin_dir_path}' không tồn tại. Bỏ qua việc tải plugin ngoài.")
         return plugins
 
-    logging.info(f"🔍 Đang quét plugin trong: {plugin_dir}")
-    for filename in os.listdir(plugin_dir):
+    logging.info(f"🔍 Đang quét plugin trong: {plugin_dir_path}")
+    for filename in os.listdir(str(plugin_dir_path)):
         if filename.endswith('.py') and not filename.startswith('_'):
             module_name = filename[:-3]
-            file_path = os.path.join(plugin_dir, filename)
+            file_path = plugin_dir_path / filename
             
             try:
                 # Tải module động từ đường dẫn file

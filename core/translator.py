@@ -2,6 +2,7 @@ import json
 import os
 import logging
 from typing import Dict, Optional, Any
+from pathlib import Path
 
 class Translator:
     def __init__(self, locales_dir: str = 'locales', settings_dir: Optional[str] = None) -> None:
@@ -9,10 +10,10 @@ class Translator:
         Khởi tạo bộ dịch.
         """
         # Đường dẫn tới thư mục cài đặt của tool
-        script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
+        script_dir = Path(__file__).resolve().parent.parent
+
         # 1. Tải file dữ liệu dịch (strings.json)
-        self.strings_path = os.path.join(script_dir, locales_dir, 'strings.json')
+        self.strings_path = script_dir / locales_dir / 'strings.json'
         self._strings = {}
         try:
             with open(self.strings_path, 'r', encoding='utf-8') as f:
@@ -22,15 +23,17 @@ class Translator:
 
         # 2. Tải file cấu hình ngôn ngữ của người dùng
         if not settings_dir:
-            settings_dir = os.path.join(os.path.expanduser("~"), '.export-code')
-        
-        os.makedirs(settings_dir, exist_ok=True)
-        self.settings_path = os.path.join(settings_dir, 'settings.json')
+            settings_dir = Path.home() / '.export-code'
+        else:
+            settings_dir = Path(settings_dir)
+
+        settings_dir.mkdir(parents=True, exist_ok=True)
+        self.settings_path = settings_dir / 'settings.json'
         self.lang = 'en' # Ngôn ngữ mặc định
         
         try:
-            if os.path.exists(self.settings_path):
-                with open(self.settings_path, 'r', encoding='utf-8') as f:
+            if self.settings_path.exists():
+                with self.settings_path.open('r', encoding='utf-8') as f:
                     settings = json.load(f)
                     self.lang = settings.get('language', 'en')
         except Exception as e:
@@ -46,7 +49,7 @@ class Translator:
         if lang_code in ['en', 'vi']: # Kiểm tra ngôn ngữ hợp lệ
             self.lang = lang_code
             try:
-                with open(self.settings_path, 'w', encoding='utf-8') as f:
+                with self.settings_path.open('w', encoding='utf-8') as f:
                     json.dump({'language': self.lang}, f, indent=2)
                 logging.info(f"Đã đổi ngôn ngữ sang: {'Tiếng Việt' if lang_code == 'vi' else 'English'}")
             except Exception as e:

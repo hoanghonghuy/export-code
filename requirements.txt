@@ -1,4 +1,4 @@
-# Các thư viện cần thiết cho export-code
+# Các thư viện cần thiết cho export-code (Yêu cầu Python >= 3.8)
 
 pathspec
 tqdm

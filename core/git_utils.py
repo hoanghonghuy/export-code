@@ -2,6 +2,7 @@ import git
 import logging
 import os
 from typing import List, Optional, Any
+from pathlib import Path
 
 def _get_repo(t: Any, path: str) -> Optional[git.Repo]:
     """
@@ -17,7 +18,7 @@ def _get_repo(t: Any, path: str) -> Optional[git.Repo]:
     try:
         return git.Repo(path, search_parent_directories=True)
     except git.exc.InvalidGitRepositoryError:
-        logging.error(t.get('error_git_repo_not_found', path=os.path.abspath(path)))
+        logging.error(t.get('error_git_repo_not_found', path=str(Path(path).resolve())))
         return None
     except Exception as e:
         logging.error(f"{t.get('error_git_init_failed')}: {e}", exc_info=True)
@@ -39,8 +40,9 @@ def get_staged_files(t: Any, repo_path: str) -> List[str]:
     
     repo_root = repo.working_tree_dir
     
-    staged_files = [os.path.join(repo_root, item.a_path) for item in repo.index.diff('HEAD')]
-    untracked_but_added = [os.path.join(repo_root, item.a_path) for item in repo.index.diff(None) if item.change_type == 'A']
+    repo_root_path = Path(repo_root)
+    staged_files = [str(repo_root_path / item.a_path) for item in repo.index.diff('HEAD')]
+    untracked_but_added = [str(repo_root_path / item.a_path) for item in repo.index.diff(None) if item.change_type == 'A']
     
     all_files = sorted(list(set(staged_files + untracked_but_added)))
     
@@ -66,7 +68,8 @@ def get_changed_files_since(t: Any, repo_path: str, branch: str) -> List[str]:
     try:
         diff_items = repo.head.commit.diff(branch)
         repo_root = repo.working_tree_dir
-        changed_files = sorted([os.path.join(repo_root, item.a_path) for item in diff_items])
+        repo_root_path = Path(repo_root)
+        changed_files = sorted([str(repo_root_path / item.a_path) for item in diff_items])
         
         logging.info(t.get('info_git_found_since', count=len(changed_files), branch=branch))
         logging.debug(f"Changed files: {changed_files}")

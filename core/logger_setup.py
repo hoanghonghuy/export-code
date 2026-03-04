@@ -1,6 +1,7 @@
 import logging
 import colorlog
 import os
+from pathlib import Path
 
 def setup_logging(project_path, verbosity=0, quiet=False):
     """
@@ -35,20 +36,20 @@ def setup_logging(project_path, verbosity=0, quiet=False):
     # --- Cấu hình cho File (lưu vào thư mục home với tên dự án) ---
     try:
         # Lấy tên của thư mục dự án
-        project_name = os.path.basename(os.path.abspath(project_path))
+        project_root = Path(project_path).resolve()
+        project_name = project_root.name
         
         # Lấy đường dẫn thư mục home của người dùng
-        home_dir = os.path.expanduser("~")
-        log_dir = os.path.join(home_dir, '.export-code', 'logs')
+        log_dir = Path.home() / '.export-code' / 'logs'
         
         # Tạo thư mục nếu chưa tồn tại
-        os.makedirs(log_dir, exist_ok=True)
+        log_dir.mkdir(parents=True, exist_ok=True)
         
         # Tạo đường dẫn file log với tên dự án
-        log_file_path = os.path.join(log_dir, f"{project_name}.log")
+        log_file_path = log_dir / f"{project_name}.log"
 
         file_format = logging.Formatter('%(asctime)s - %(levelname)-8s - %(message)s')
-        file_handler = logging.FileHandler(log_file_path, mode='w', encoding='utf-8')
+        file_handler = logging.FileHandler(str(log_file_path), mode='w', encoding='utf-8')
         file_handler.setLevel(logging.INFO) # Luôn ghi log từ mức INFO vào file
         file_handler.setFormatter(file_format)
         
