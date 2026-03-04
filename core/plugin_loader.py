@@ -2,10 +2,10 @@ import os
 import importlib.util
 import inspect
 import logging
-from typing import List
+from typing import List, Optional
 from .plugin_base import ExportCodePlugin
 
-def load_plugins(plugin_dir: str = None) -> List[ExportCodePlugin]:
+def load_plugins(plugin_dir: Optional[str] = None) -> List[ExportCodePlugin]:
     """
     Quét một thư mục, tự động tải các plugin và trả về một danh sách các instance.
     """

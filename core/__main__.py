@@ -5,7 +5,7 @@ import sys
 import time
 
 from .logger_setup import setup_logging
-from .utils import load_profiles, find_project_files, get_gitignore_spec, get_extensions_from_profiles
+from .utils import load_profiles, find_project_files, get_gitignore_spec, get_extensions_from_profiles, DEFAULT_EXCLUDE_DIRS
 from .tree_generator import generate_tree, export_godot_scene_trees
 from .bundler import create_code_bundle
 from .api_mapper import export_api_map
@@ -19,14 +19,6 @@ from .plugin_loader import load_plugins
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-DEFAULT_EXCLUDE_DIRS = [
-    '.git', '.vscode', 'dist', 'build',
-    'node_modules',
-    '__pycache__', 'venv', '.venv', 'env', '*.egg-info',
-    'bin', 'obj',
-    '.expo',
-    '.godot'
-]
 
 
 def _ascii_tree_fallback(text):

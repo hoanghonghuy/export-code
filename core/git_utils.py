@@ -1,9 +1,19 @@
 import git
 import logging
 import os
+from typing import List, Optional, Any
 
-def _get_repo(t, path):
-    """Tìm đối tượng repo Git từ đường dẫn, xử lý lỗi nếu không tìm thấy."""
+def _get_repo(t: Any, path: str) -> Optional[git.Repo]:
+    """
+    Tìm đối tượng repo Git từ đường dẫn, xử lý lỗi nếu không tìm thấy.
+    
+    Args:
+        t: Đối tượng Translator.
+        path: Đường dẫn đến thư mục cần kiểm tra repo Git.
+        
+    Returns:
+        Đối tượng git.Repo hoặc None nếu không tìm thấy.
+    """
     try:
         return git.Repo(path, search_parent_directories=True)
     except git.exc.InvalidGitRepositoryError:
@@ -13,8 +23,17 @@ def _get_repo(t, path):
         logging.error(f"{t.get('error_git_init_failed')}: {e}", exc_info=True)
         return None
 
-def get_staged_files(t, repo_path):
-    """Lấy danh sách các file đã được add vào staging area."""
+def get_staged_files(t: Any, repo_path: str) -> List[str]:
+    """
+    Lấy danh sách các file đã được add vào staging area.
+    
+    Args:
+        t: Đối tượng Translator.
+        repo_path: Đường dẫn đến thư mục dự án.
+        
+    Returns:
+        Danh sách đường dẫn tuyệt đối đến các file trong staging area.
+    """
     repo = _get_repo(t, repo_path)
     if not repo: return []
     
@@ -29,8 +48,18 @@ def get_staged_files(t, repo_path):
     logging.debug(f"Files in staging: {all_files}")
     return all_files
 
-def get_changed_files_since(t, repo_path, branch):
-    """Lấy danh sách các file đã thay đổi so với một nhánh cụ thể."""
+def get_changed_files_since(t: Any, repo_path: str, branch: str) -> List[str]:
+    """
+    Lấy danh sách các file đã thay đổi so với một nhánh cụ thể.
+    
+    Args:
+        t: Đối tượng Translator.
+        repo_path: Đường dẫn đến thư mục dự án.
+        branch: Tên nhánh để so sánh.
+        
+    Returns:
+        Danh sách đường dẫn tuyệt đối đến các file đã thay đổi.
+    """
     repo = _get_repo(t, repo_path)
     if not repo: return []
         

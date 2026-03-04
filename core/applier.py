@@ -175,11 +175,18 @@ def apply_changes(t: Any, project_root: str, bundle_path: str, show_diff: bool =
             
             # Kiểm tra quyền ghi trước khi ghi file
             output_dir = os.path.dirname(project_file_path)
-            if output_dir and not os.access(output_dir, os.W_OK):
-                logging.error(f"   ❌ {t.get('error_no_write_permission', path=output_dir)}")
+            
+            # Nếu thư mục chưa tồn tại, kiểm tra quyền ghi ở thư mục cha gần nhất hiện có
+            check_dir = output_dir
+            while check_dir and not os.path.exists(check_dir):
+                check_dir = os.path.dirname(check_dir)
+            
+            if check_dir and not os.access(check_dir, os.W_OK):
+                logging.error(f"   ❌ {t.get('error_no_write_permission', path=check_dir)}")
                 continue
 
-            os.makedirs(output_dir, exist_ok=True)
+            if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
             with open(project_file_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             status = t.get('tag_created') if is_new else t.get('tag_updated')

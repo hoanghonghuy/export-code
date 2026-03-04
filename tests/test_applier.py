@@ -51,3 +51,45 @@ def test_apply_changes_updates_files(tmp_path, monkeypatch):
     new_file = project_root / "new" / "bar.txt"
     assert new_file.exists()
     assert new_file.read_text(encoding="utf-8") == "hello world"
+
+
+def test_apply_changes_prevents_path_traversal(tmp_path, monkeypatch, caplog):
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    
+    # Tạo bundle chứa đường dẫn độc hại
+    divider = "=" * 80
+    malicious_bundle_content = "\n".join([
+        BUNDLE_HEADER_MARKER,
+        "--- FILE: ../outside.txt ---",
+        "malicious content",
+        divider,
+        "--- FILE: project/../../etc/passwd ---",
+        "malicious content",
+    ])
+    
+    bundle_path = tmp_path / "malicious_bundle.txt"
+    bundle_path.write_text(malicious_bundle_content, encoding="utf-8")
+    
+    translator = DummyTranslator(settings_dir=str(tmp_path / "settings"))
+    
+    # Giả lập việc chọn tất cả file (mặc dù chúng sẽ bị bỏ qua)
+    choices = [
+        f"../outside.txt ({translator.get('tag_new')})",
+        f"project/../../etc/passwd ({translator.get('tag_new')})",
+    ]
+    
+    def fake_prompt(*args, **kwargs):
+        return {"files_to_apply": choices}
+    
+    monkeypatch.setattr("core.applier.inquirer.prompt", fake_prompt)
+    
+    with caplog.at_level("WARNING"):
+        apply_changes(translator, str(project_root), str(bundle_path), show_diff=False)
+    
+    # Kiểm tra xem có cảnh báo Bypass attempt không
+    assert "Bypass attempt detected" in caplog.text
+    
+    # Đảm bảo không có file nào được tạo ra bên ngoài project_root
+    outside_file = tmp_path / "outside.txt"
+    assert not outside_file.exists()

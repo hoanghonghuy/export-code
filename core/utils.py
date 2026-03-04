@@ -8,6 +8,15 @@ SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GLOBAL_CONFIG_FILE = os.path.join(SCRIPT_DIR, 'config.json')
 LOCAL_CONFIG_FILENAME = '.export-code.json'
 
+DEFAULT_EXCLUDE_DIRS = [
+    '.git', '.vscode', 'dist', 'build',
+    'node_modules',
+    '__pycache__', 'venv', '.venv', 'env', '*.egg-info',
+    'bin', 'obj',
+    '.expo',
+    '.godot'
+]
+
 def load_profiles(project_path: str = '.') -> Dict[str, Any]:
     """
     Tải cấu hình profile từ file cục bộ hoặc toàn cục.

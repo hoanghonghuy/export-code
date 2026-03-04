@@ -2,10 +2,23 @@ import os
 import re
 import codecs
 import logging
+from typing import List, Optional, Set, Dict, Any
+import pathspec
 from tqdm import tqdm
 from .utils import get_gitignore_spec
 
-def generate_tree(root_dir, exclude_dirs, gitignore_spec):
+def generate_tree(root_dir: str, exclude_dirs: Set[str], gitignore_spec: Optional[pathspec.GitIgnoreSpec]) -> str:
+    """
+    Tạo cấu trúc cây thư mục dưới dạng chuỗi văn bản.
+    
+    Args:
+        root_dir: Thư mục gốc.
+        exclude_dirs: Tập hợp các thư mục cần loại trừ.
+        gitignore_spec: Đối tượng GitIgnoreSpec để lọc file.
+        
+    Returns:
+        Chuỗi văn bản biểu diễn cây thư mục.
+    """
     tree_lines = []
     exclude_set = set(exclude_dirs)
     # This function does not produce user-facing logs, so it does not need `t`
@@ -30,9 +43,19 @@ def generate_tree(root_dir, exclude_dirs, gitignore_spec):
             tree_lines.append(f"{sub_indent}{connector}{f}")
     return "\n".join(tree_lines)
 
-def parse_godot_scene(filepath):
-    # This is a helper function, no user-facing logs
-    ext_resources, nodes_data, root_node_name = {}, {}, None
+def parse_godot_scene(filepath: str) -> Optional[Dict[str, Any]]:
+    """
+    Phân tích file scene Godot (.tscn) để lấy cấu trúc node.
+    
+    Args:
+        filepath: Đường dẫn đến file .tscn.
+        
+    Returns:
+        Dict chứa cấu trúc cây node, hoặc None nếu không phân tích được.
+    """
+    ext_resources: Dict[str, str] = {}
+    nodes_data: Dict[str, Any] = {}
+    root_node_name: Optional[str] = None
     with open(filepath, 'r', encoding='utf-8') as f: content = f.read()
     ext_res_pattern = re.compile(r'\[ext_resource\s+type="PackedScene"\s+uid="[^"]+"\s+path="res://([^"]+)"\s+id="([^"]+)"\]')
     for match in ext_res_pattern.finditer(content):
@@ -52,8 +75,10 @@ def parse_godot_scene(filepath):
                 nodes_data[parent_name]['children'].append(data)
     return nodes_data.get(root_node_name)
 
-def format_scene_tree_recursive(node_data, prefix="", is_last=True):
-    # This is a helper function, no user-facing logs
+def format_scene_tree_recursive(node_data: Dict[str, Any], prefix: str = "", is_last: bool = True) -> List[str]:
+    """
+    Đệ quy tạo danh sách các dòng văn bản biểu diễn cây scene Godot.
+    """
     if not node_data: return []
     lines = [f"{prefix}{'└── ' if is_last else '├── '}{node_data['name']} ({node_data['type']})"]
     children = node_data.get('children', [])
@@ -62,7 +87,16 @@ def format_scene_tree_recursive(node_data, prefix="", is_last=True):
         lines.extend(format_scene_tree_recursive(child_data, new_prefix, i == (len(children) - 1)))
     return lines
 
-def export_godot_scene_trees(t, project_path, output_file, exclude_dirs):
+def export_godot_scene_trees(t: Any, project_path: str, output_file: str, exclude_dirs: Set[str]) -> None:
+    """
+    Xuất cấu trúc cây scene của tất cả các file .tscn trong dự án.
+    
+    Args:
+        t: Đối tượng Translator.
+        project_path: Đường dẫn đến thư mục dự án.
+        output_file: Tên file output.
+        exclude_dirs: Tập hợp các thư mục cần loại trừ.
+    """
     project_root = os.path.abspath(project_path)
     logging.info(t.get('info_scene_tree_start', path=project_root))
     gitignore_spec = get_gitignore_spec(project_root)

@@ -1,9 +1,10 @@
 import json
 import os
 import logging
+from typing import Dict, Optional, Any
 
 class Translator:
-    def __init__(self, locales_dir='locales', settings_dir=None):
+    def __init__(self, locales_dir: str = 'locales', settings_dir: Optional[str] = None) -> None:
         """
         Khởi tạo bộ dịch.
         """
@@ -35,9 +36,12 @@ class Translator:
         except Exception as e:
             logging.warning(f"Không thể đọc file cài đặt ngôn ngữ, sử dụng mặc định 'en'. Lỗi: {e}")
     
-    def set_language(self, lang_code):
+    def set_language(self, lang_code: str) -> None:
         """
         Thay đổi ngôn ngữ hiện tại và lưu lại cho các lần chạy sau.
+        
+        Args:
+            lang_code: Mã ngôn ngữ ('en' hoặc 'vi').
         """
         if lang_code in ['en', 'vi']: # Kiểm tra ngôn ngữ hợp lệ
             self.lang = lang_code
@@ -50,8 +54,18 @@ class Translator:
         else:
             logging.warning(f"Mã ngôn ngữ '{lang_code}' không được hỗ trợ.")
 
-    def get(self, key, default=None, **kwargs):
-        """Lấy chuỗi văn bản đã được dịch, có hỗ trợ giá trị mặc định."""
+    def get(self, key: str, default: Optional[str] = None, **kwargs: Any) -> str:
+        """
+        Lấy chuỗi văn bản đã được dịch, có hỗ trợ giá trị mặc định và định dạng chuỗi.
+        
+        Args:
+            key: Khóa của chuỗi cần dịch.
+            default: Giá trị mặc định nếu không tìm thấy khóa.
+            **kwargs: Các tham số để định dạng chuỗi (template string).
+            
+        Returns:
+            Chuỗi văn bản đã được dịch và định dạng.
+        """
         entry = self._strings.get(key)
         template = None
 
