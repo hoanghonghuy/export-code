@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import shlex
 
 def run_quality_tool(t, tool_name, command, files_to_process):
     """
@@ -13,10 +14,16 @@ def run_quality_tool(t, tool_name, command, files_to_process):
         logging.info(t.get('info_no_files_for_tool', tool=tool_name))
         return
 
-    tool_command_name = command.split()[0]
+    try:
+        command_parts = shlex.split(command)
+    except ValueError as e:
+        logging.error(f"❌ Lỗi phân tách lệnh: {e}")
+        return
+
+    tool_command_name = command_parts[0]
     logging.info(f"\n▶️  {t.get('info_running_tool', tool=tool_command_name, count=len(files_to_process))}")
     
-    full_command = command.split() + files_to_process
+    full_command = command_parts + files_to_process
      
     try:
         result = subprocess.run(full_command, capture_output=True, text=True, shell=False, check=False, timeout=300)  # 5 minutes timeout

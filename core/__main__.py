@@ -5,7 +5,7 @@ import sys
 import time
 
 from .logger_setup import setup_logging
-from .utils import load_profiles, find_project_files, get_gitignore_spec
+from .utils import load_profiles, find_project_files, get_gitignore_spec, get_extensions_from_profiles
 from .tree_generator import generate_tree, export_godot_scene_trees
 from .bundler import create_code_bundle
 from .api_mapper import export_api_map
@@ -166,9 +166,7 @@ def run_interactive_mode(t):
             ans = inquirer.prompt([inquirer.Checkbox('selected_profiles', message=t.get("prompt_select_profiles"), choices=list(profiles.keys()), default=['default'])], theme=GreenPassion())
             if not ans: logging.info(t.get("goodbye")); return
             profile_names_to_use = ans.get('selected_profiles', [])
-            ext_set = set()
-            for name in profile_names_to_use: ext_set.update(profiles.get(name, {}).get('extensions', []))
-            extensions_to_use = sorted(list(ext_set))
+            extensions_to_use = get_extensions_from_profiles(profiles, profile_names_to_use)
 
     if source_mode == 'walk':
         final_files_to_process = find_project_files(project_path, set(DEFAULT_EXCLUDE_DIRS), use_all_files, extensions_to_use)
@@ -245,9 +243,7 @@ def _get_files_to_process(t, args, profiles):
         if args.all: use_all_files_walk = True
         elif args.ext: extensions_to_use_walk = args.ext
         elif args.profile:
-            ext_set = set()
-            for name in profile_names_to_use_walk: ext_set.update(profiles.get(name, {}).get('extensions', []))
-            extensions_to_use_walk = list(ext_set)
+            extensions_to_use_walk = get_extensions_from_profiles(profiles, profile_names_to_use_walk)
         else: extensions_to_use_walk = profiles.get('default', {}).get('extensions', [])
         initial_file_list = find_project_files(args.project_path, set(args.exclude), use_all_files_walk, extensions_to_use_walk)
 
@@ -255,9 +251,7 @@ def _get_files_to_process(t, args, profiles):
     profile_names_to_use = args.profile or []
     if args.ext: extensions_to_filter = args.ext
     elif args.profile:
-        ext_set = set()
-        for name in profile_names_to_use: ext_set.update(profiles.get(name, {}).get('extensions', []))
-        extensions_to_filter = list(ext_set)
+        extensions_to_filter = get_extensions_from_profiles(profiles, profile_names_to_use)
     
     if (args.staged or args.since) and (extensions_to_filter or args.all):
         if args.all:
@@ -400,9 +394,7 @@ def main():
         if args.all: use_all_to_watch = True
         elif args.ext: extensions_to_watch = args.ext
         elif args.profile:
-            ext_set = set()
-            for name in args.profile: ext_set.update(profiles.get(name, {}).get('extensions', []))
-            extensions_to_watch = list(ext_set)
+            extensions_to_watch = get_extensions_from_profiles(profiles, args.profile)
         else: extensions_to_watch = profiles.get('default', {}).get('extensions', [])
         
         event_handler = ChangeHandler(t, args.project_path, output_filename, extensions_to_watch, set(args.exclude), use_all_to_watch, output_format=args.format)

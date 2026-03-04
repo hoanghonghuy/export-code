@@ -3,6 +3,7 @@ import sys
 import codecs
 import difflib
 import logging
+from typing import Dict, List, Optional, Any
 
 from colorama import init, Fore, Style
 
@@ -29,7 +30,8 @@ GreenPassion = _GreenPassionStub
 
 init(autoreset=True)
 
-def _colorize_diff(diff_lines):
+def _colorize_diff(diff_lines: List[str]) -> str:
+    """Thêm màu sắc cho các dòng diff để hiển thị trên console."""
     colored_lines = []
     for line in diff_lines:
         if line.startswith('+'):
@@ -42,7 +44,17 @@ def _colorize_diff(diff_lines):
             colored_lines.append(line)
     return "\n".join(colored_lines)
 
-def parse_bundle_file(t, bundle_path):
+def parse_bundle_file(t: Any, bundle_path: str) -> Optional[Dict[str, str]]:
+    """
+    Phân tích file bundle để lấy danh sách file và nội dung tương ứng.
+    
+    Args:
+        t: Đối tượng Translator.
+        bundle_path: Đường dẫn đến file bundle.
+        
+    Returns:
+        Dict ánh xạ từ đường dẫn file đến nội dung, hoặc None nếu có lỗi.
+    """
     if not os.path.exists(bundle_path):
         logging.error(t.get('error_file_not_found', path=bundle_path))
         return None
@@ -63,7 +75,16 @@ def parse_bundle_file(t, bundle_path):
         
     return file_contents
 
-def apply_changes(t, project_root, bundle_path, show_diff=False):
+def apply_changes(t: Any, project_root: str, bundle_path: str, show_diff: bool = False) -> None:
+    """
+    Áp dụng các thay đổi từ file bundle vào dự án hiện tại.
+    
+    Args:
+        t: Đối tượng Translator.
+        project_root: Thư mục gốc của dự án.
+        bundle_path: Đường dẫn đến file bundle.
+        show_diff: Nếu True, hiển thị bản xem trước các thay đổi.
+    """
     global inquirer, GreenPassion
     if inquirer.prompt == _InquirerStub.prompt:
         import inquirer as real_inquirer
@@ -84,13 +105,11 @@ def apply_changes(t, project_root, bundle_path, show_diff=False):
             
         # Chuẩn hóa và xác thực đường dẫn để ngăn Path Traversal
         normalized_relative_path = os.path.normpath(relative_path)
-        # Chuyển đổi tất cả dấu phân cách đường dẫn thành dấu / để kiểm tra
-        normalized_for_check = normalized_relative_path.replace('\\', '/')
-        if normalized_for_check.startswith('../') or '/..' in normalized_for_check:
+        project_file_path = os.path.abspath(os.path.join(project_root, normalized_relative_path))
+        
+        if not project_file_path.startswith(os.path.abspath(project_root) + os.sep) and project_file_path != os.path.abspath(project_root):
             logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
             continue
-            
-        project_file_path = os.path.join(project_root, normalized_relative_path)
         
         if os.path.exists(project_file_path):
             try:
@@ -145,14 +164,13 @@ def apply_changes(t, project_root, bundle_path, show_diff=False):
         
         # Chuẩn hóa và xác thực đường dẫn để ngăn Path Traversal
         normalized_relative_path = os.path.normpath(relative_path)
-        # Chuyển đổi tất cả dấu phân cách đường dẫn thành dấu / để kiểm tra
-        normalized_for_check = normalized_relative_path.replace('\\', '/')
-        if normalized_for_check.startswith('../') or '/..' in normalized_for_check:
+        project_file_path = os.path.abspath(os.path.join(project_root, normalized_relative_path))
+        
+        if not project_file_path.startswith(os.path.abspath(project_root) + os.sep) and project_file_path != os.path.abspath(project_root):
             logging.warning(f"   ⚠️  Bypass attempt detected for path: {relative_path}. Skipping...")
             continue
             
         try:
-            project_file_path = os.path.join(project_root, normalized_relative_path)
             new_content = bundle_data[relative_path]
             
             # Kiểm tra quyền ghi trước khi ghi file
